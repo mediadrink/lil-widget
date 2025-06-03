@@ -2,7 +2,7 @@
   const params = new URLSearchParams(window.location.search);
   const widgetId = params.get("uid") || "demo123";
 
-  const apiBase = "http://localhost:3000"; // change to your live domain when deployed
+  const apiBase = "https://lil-widget-n3s7.vercel.app"; // change to your live domain when deployed
 
   const style = document.createElement("style");
   style.innerHTML = `
