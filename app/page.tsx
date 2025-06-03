@@ -15,7 +15,7 @@ export default function WidgetDemo() {
     setInput("");
     setLoading(true);
 
-    const res = await fetch("/api/chat", {
+    const res = await fetch("https://lil-widget-n3s7.vercel.app/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: userMessage, widgetId: "demo123" }),
