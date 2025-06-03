@@ -4,7 +4,7 @@
 import { useState } from 'react';
 
 export default function WidgetDemo() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
