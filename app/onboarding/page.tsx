@@ -73,6 +73,37 @@ export default function OnboardingPage() {
     checkUser();
   }, []);
 
+  // Check for payment success and poll for upgrade
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentSuccess = params.get("payment_success");
+
+    if (paymentSuccess === "true" && !isPaidUser) {
+      // Poll for user upgrade (webhook might take a moment)
+      const pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch("/api/auth/user");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.user?.user_metadata?.subscription_tier === "paid") {
+              setIsPaidUser(true);
+              clearInterval(pollInterval);
+              // Clear URL params
+              window.history.replaceState({}, "", "/onboarding");
+            }
+          }
+        } catch (err) {
+          console.error("Failed to poll user status:", err);
+        }
+      }, 2000); // Check every 2 seconds
+
+      // Stop polling after 30 seconds
+      setTimeout(() => clearInterval(pollInterval), 30000);
+
+      return () => clearInterval(pollInterval);
+    }
+  }, [isPaidUser]);
+
   // Poll for email verification when on verify-email step
   React.useEffect(() => {
     if (currentStep !== "verify-email") return;
@@ -317,26 +348,31 @@ export default function OnboardingPage() {
         throw new Error("Could not create or find widget");
       }
 
-      const res = await fetch("/api/auth/update-profile", {
+      // Create Stripe checkout session
+      const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subscription_tier: "paid" }),
+        body: JSON.stringify({
+          email: userEmail,
+          priceId: "price_1SOtw9EVxGVhW8Bvp0U9ef3u"
+        }),
       });
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to upgrade");
+        throw new Error(data.error || "Failed to create checkout session");
       }
 
-      setIsPaidUser(true);
-      // Automatically run expanded crawl after upgrade
-      await runDeepCrawl();
+      const { url } = await res.json();
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
     } catch (err: any) {
       console.error("Upgrade error:", err);
-      alert(err.message || "Failed to upgrade tier. Please try again.");
-    } finally {
+      alert(err.message || "Failed to start checkout. Please try again.");
       setUpgradingTier(false);
     }
+    // Don't set upgradingTier to false here - page will redirect
   }
 
   async function runDeepCrawl() {
@@ -711,15 +747,45 @@ export default function OnboardingPage() {
                   💡 <strong>Tip:</strong> The verification link will open in a new tab. Stay on this page - it will automatically detect when you verify and continue the setup.
                 </p>
               </div>
-              <button
-                onClick={resendVerificationEmail}
-                disabled={resendCooldown > 0}
-                className="rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {resendCooldown > 0
-                  ? `Resend in ${resendCooldown}s`
-                  : "Resend Verification Email"}
-              </button>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={async () => {
+                    setCheckingVerification(true);
+                    try {
+                      const res = await fetch("/api/auth/user");
+                      if (res.ok) {
+                        const data = await res.json();
+                        if (data.user?.email_confirmed_at) {
+                          setIsEmailVerified(true);
+                          setTimeout(() => {
+                            setCurrentStep("crawl");
+                          }, 500);
+                        } else {
+                          alert("Email not verified yet. Please click the link in your email first.");
+                        }
+                      }
+                    } catch (err) {
+                      console.error("Failed to check verification:", err);
+                      alert("Failed to check verification status. Please try again.");
+                    } finally {
+                      setCheckingVerification(false);
+                    }
+                  }}
+                  disabled={checkingVerification}
+                  className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {checkingVerification ? "Checking..." : "I've Verified My Email →"}
+                </button>
+                <button
+                  onClick={resendVerificationEmail}
+                  disabled={resendCooldown > 0}
+                  className="rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {resendCooldown > 0
+                    ? `Resend in ${resendCooldown}s`
+                    : "Resend Email"}
+                </button>
+              </div>
             </div>
 
             <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-6 text-center">
