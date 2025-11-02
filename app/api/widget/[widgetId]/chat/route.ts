@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/utils/supabase/serverAdmin";
 import { OpenAI } from "openai";
+import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,34 @@ export async function POST(
     const { widgetId } = params;
     const { conversationId, message, visitorId, isTest, stream } = await req.json();
 
+    // Rate limiting - prevent bot abuse
+    const clientIp = getClientIp(req);
+    const rateLimitKey = `widget:${widgetId}:${clientIp}`;
+    const rateLimit = checkRateLimit(rateLimitKey, RATE_LIMITS.WIDGET_CHAT);
+
+    if (!rateLimit.success) {
+      const resetDate = new Date(rateLimit.reset).toISOString();
+      return new Response(
+        JSON.stringify({
+          error: "Too many requests. Please try again later.",
+          retryAfter: Math.ceil((rateLimit.reset - Date.now()) / 1000),
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": resetDate,
+            "Retry-After": Math.ceil((rateLimit.reset - Date.now()) / 1000).toString(),
+          },
+        }
+      );
+    }
+
     if (!widgetId || !message) {
       return new Response(
         JSON.stringify({ error: "widgetId and message required" }),
@@ -203,6 +232,8 @@ export async function POST(
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": rateLimit.remaining.toString(),
           },
         }
       );
@@ -396,6 +427,8 @@ export async function POST(
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "POST, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type",
+          "X-RateLimit-Limit": rateLimit.limit.toString(),
+          "X-RateLimit-Remaining": rateLimit.remaining.toString(),
         },
       });
     }
@@ -435,6 +468,8 @@ export async function POST(
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "POST, OPTIONS",
             "Access-Control-Allow-Headers": "Content-Type",
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": rateLimit.remaining.toString(),
           },
         }
       );
