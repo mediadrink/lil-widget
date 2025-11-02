@@ -21,6 +21,44 @@ const STEP_INFO = {
   install: { number: 6, label: "Install Code", total: 6 },
 };
 
+// Parse markdown for chat messages
+function parseMarkdown(text: string): string {
+  if (!text) return '';
+  let html = text;
+
+  // Escape HTML for XSS protection
+  html = html
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Bold: **text**
+  html = html.replace(/\*\*([^*]+?)\*\*/g, '<strong>$1</strong>');
+
+  // Italic: *text*
+  html = html.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
+
+  // Lists before line breaks
+  html = html.replace(/^[\-\*•]\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li style="list-style-type: decimal;">$1</li>');
+
+  // Line breaks
+  html = html.replace(/\n\n/g, '</p><p style="margin: 0.5em 0;">');
+  html = html.replace(/\n/g, '<br>');
+
+  // Wrap lists
+  html = html.replace(/(<li[^>]*>[\s\S]*?<\/li>(?:<br>|<br\/>|\s)*)+/g, function(match) {
+    const cleanedMatch = match.replace(/<br\s*\/?>/g, '');
+    if (match.includes('list-style-type: decimal')) {
+      return '<ol style="margin: 0.5em 0; padding-left: 1.5em;">' + cleanedMatch + '</ol>';
+    } else {
+      return '<ul style="margin: 0.5em 0; padding-left: 1.5em; list-style-type: disc;">' + cleanedMatch + '</ul>';
+    }
+  });
+
+  return html;
+}
+
 export default function OnboardingPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = React.useState<Step>("basics");
@@ -1123,25 +1161,22 @@ export default function OnboardingPage() {
             <div className="space-y-6 mb-8">
               {/* Industry Selector for data collection only */}
               <div>
-                <label className="block text-base font-bold text-neutral-900 mb-2">
+                <label className="block text-sm font-semibold text-neutral-700 mb-2">
                   What industry are you in?
                 </label>
-                <p className="text-sm text-neutral-600 mb-4">
-                  This helps us provide better insights and features for your business type.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   {INDUSTRIES.map((industry) => (
                     <button
                       key={industry.id}
                       onClick={() => {
                         setSelectedIndustry(industry.id);
                       }}
-                      className={"p-4 rounded-xl border-2 text-left transition-all " + (selectedIndustry === industry.id ? "border-amber-400 bg-amber-50" : "border-neutral-200 hover:border-neutral-400")}
+                      className={"p-2 rounded-lg border-2 text-left transition-all " + (selectedIndustry === industry.id ? "border-amber-400 bg-amber-50" : "border-neutral-200 hover:border-neutral-300")}
                     >
-                      <div className="text-lg mb-1">{industry.icon}</div>
-                      <div className="font-semibold text-sm">{industry.label}</div>
+                      <div className="text-base mb-0.5">{industry.icon}</div>
+                      <div className="font-medium text-xs leading-tight">{industry.label}</div>
                       {industry.sublabel && (
-                        <div className="text-xs text-neutral-500 mt-1">{industry.sublabel}</div>
+                        <div className="text-[10px] text-neutral-500 mt-0.5">{industry.sublabel}</div>
                       )}
                     </button>
                   ))}
@@ -1263,7 +1298,11 @@ export default function OnboardingPage() {
                         key={idx}
                         className={"p-3 rounded-lg text-sm " + (msg.role === "user" ? "bg-blue-500 text-white ml-8 text-right" : "bg-neutral-100 mr-8")}
                       >
-                        {msg.content}
+                        {msg.role === "assistant" ? (
+                          <div dangerouslySetInnerHTML={{ __html: parseMarkdown(msg.content) }} />
+                        ) : (
+                          msg.content
+                        )}
                       </div>
                     ))}
                   </div>
