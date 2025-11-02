@@ -342,6 +342,23 @@ export default function OnboardingPage() {
   async function upgradeToPaid() {
     setUpgradingTier(true);
     try {
+      // Ensure we have user email
+      if (!userEmail) {
+        // Try to fetch user email again
+        const userRes = await fetch("/api/auth/user");
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const email = userData.user?.email;
+          if (email) {
+            setUserEmail(email);
+          } else {
+            throw new Error("No email found. Please refresh the page and try again.");
+          }
+        } else {
+          throw new Error("Not authenticated. Please refresh the page and try again.");
+        }
+      }
+
       // Ensure widget is created first
       const createdWidgetId = await ensureWidgetCreated();
       if (!createdWidgetId && !widgetId) {
