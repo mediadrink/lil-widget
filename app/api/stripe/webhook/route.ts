@@ -52,13 +52,17 @@ export async function POST(req: NextRequest) {
       }
 
       case "invoice.payment_succeeded": {
-        const invoice = event.data.object as Stripe.Invoice;
-        const subscription = invoice.subscription;
-        const customerId = invoice.customer as string;
+        const invoice = event.data.object as any;
+        const subscriptionId = typeof invoice.subscription === 'string'
+          ? invoice.subscription
+          : invoice.subscription?.id;
+        const customerId = typeof invoice.customer === 'string'
+          ? invoice.customer
+          : invoice.customer?.id;
 
         // Get the subscription to access metadata
-        if (subscription) {
-          const sub = await stripe.subscriptions.retrieve(subscription as string);
+        if (subscriptionId && customerId) {
+          const sub = await stripe.subscriptions.retrieve(subscriptionId);
           const userId = sub.metadata?.user_id;
 
           if (userId) {
@@ -67,7 +71,7 @@ export async function POST(req: NextRequest) {
               user_metadata: {
                 subscription_tier: "paid",
                 stripe_customer_id: customerId,
-                subscription_id: subscription,
+                subscription_id: subscriptionId,
               },
             });
 
