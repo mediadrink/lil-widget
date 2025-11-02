@@ -51,6 +51,36 @@ export async function POST(req: NextRequest) {
         break;
       }
 
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscription = invoice.subscription;
+        const customerId = invoice.customer as string;
+
+        // Get the subscription to access metadata
+        if (subscription) {
+          const sub = await stripe.subscriptions.retrieve(subscription as string);
+          const userId = sub.metadata?.user_id;
+
+          if (userId) {
+            // Update user to paid tier
+            const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+              user_metadata: {
+                subscription_tier: "paid",
+                stripe_customer_id: customerId,
+                subscription_id: subscription,
+              },
+            });
+
+            if (error) {
+              console.error("Failed to update user:", error);
+            } else {
+              console.log(`✅ User ${userId} upgraded to paid tier`);
+            }
+          }
+        }
+        break;
+      }
+
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;

@@ -2,6 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
+
+const StripePaymentForm = dynamic(() => import("@/app/components/StripePaymentForm"), {
+  ssr: false,
+});
 
 type Step = "basics" | "verify-email" | "crawl" | "persona" | "test" | "install";
 
@@ -36,6 +41,8 @@ export default function OnboardingPage() {
   const [deepCrawlResult, setDeepCrawlResult] = React.useState<any>(null);
   const [isPaidUser, setIsPaidUser] = React.useState(false);
   const [upgradingTier, setUpgradingTier] = React.useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = React.useState<string | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = React.useState(false);
 
   const [testMessage, setTestMessage] = React.useState("");
   const [testConversation, setTestConversation] = React.useState<
@@ -365,8 +372,8 @@ export default function OnboardingPage() {
         throw new Error("Could not create or find widget");
       }
 
-      // Create Stripe checkout session
-      const res = await fetch("/api/create-checkout-session", {
+      // Create Stripe subscription with payment intent
+      const res = await fetch("/api/create-subscription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -377,19 +384,33 @@ export default function OnboardingPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Failed to create checkout session");
+        throw new Error(data.error || "Failed to create subscription");
       }
 
-      const { url } = await res.json();
+      const { clientSecret } = await res.json();
 
-      // Redirect to Stripe Checkout
-      window.location.href = url;
+      // Show embedded payment form
+      setPaymentClientSecret(clientSecret);
+      setShowPaymentForm(true);
+      setUpgradingTier(false);
     } catch (err: any) {
       console.error("Upgrade error:", err);
-      alert(err.message || "Failed to start checkout. Please try again.");
+      alert(err.message || "Failed to start payment. Please try again.");
       setUpgradingTier(false);
     }
-    // Don't set upgradingTier to false here - page will redirect
+  }
+
+  function handlePaymentSuccess() {
+    setShowPaymentForm(false);
+    setIsPaidUser(true);
+    // Auto-run deep crawl after successful payment
+    runDeepCrawl();
+  }
+
+  function handlePaymentError(error: string) {
+    alert(`Payment failed: ${error}`);
+    setShowPaymentForm(false);
+    setPaymentClientSecret(null);
   }
 
   async function runDeepCrawl() {
@@ -1007,13 +1028,34 @@ export default function OnboardingPage() {
                       >
                         {deepCrawling || upgradingTier ? "Crawling..." : "🚀 Run Expanded Crawl (10 pages)"}
                       </button>
+                    ) : showPaymentForm && paymentClientSecret ? (
+                      <div className="max-w-lg">
+                        <div className="mb-4">
+                          <h5 className="font-semibold text-neutral-900 mb-1">Growth Plan - $19/month</h5>
+                          <p className="text-sm text-neutral-600">Enter your payment details to unlock expanded crawl</p>
+                        </div>
+                        <StripePaymentForm
+                          clientSecret={paymentClientSecret}
+                          onSuccess={handlePaymentSuccess}
+                          onError={handlePaymentError}
+                        />
+                        <button
+                          onClick={() => {
+                            setShowPaymentForm(false);
+                            setPaymentClientSecret(null);
+                          }}
+                          className="mt-3 text-sm text-neutral-500 hover:text-neutral-700 underline"
+                        >
+                          Cancel
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={upgradeToPaid}
                         disabled={upgradingTier}
                         className="rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-6 py-2.5 text-sm disabled:opacity-50 transition-colors shadow-sm"
                       >
-                        {upgradingTier ? "Upgrading & Crawling..." : "⭐ Upgrade to Enable Expanded Crawl"}
+                        {upgradingTier ? "Loading payment form..." : "⭐ Upgrade to Enable Expanded Crawl"}
                       </button>
                     )}
                   </div>
