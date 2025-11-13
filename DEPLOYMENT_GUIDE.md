@@ -1,5 +1,11 @@
 # 🚀 Lil Widget - Production Deployment Guide
 
+> **Status:** ✅ DEPLOYMENT COMPLETE
+> This guide documents the deployment process that was successfully completed.
+> Keep this for reference when making updates or troubleshooting production.
+
+---
+
 ## Prerequisites
 
 Before deploying to production, ensure you have:
@@ -37,8 +43,8 @@ STRIPE_PRICE_ID=price_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
 # App Configuration (Required)
-NEXT_PUBLIC_BASE_URL=https://yourdomain.com
-NEXT_PUBLIC_EMBED_ORIGIN=https://yourdomain.com
+NEXT_PUBLIC_BASE_URL=https://lilwidget.com
+NEXT_PUBLIC_EMBED_ORIGIN=https://lilwidget.com
 
 # Email (Required for email verification)
 RESEND_API_KEY=re_...
@@ -255,7 +261,7 @@ Add all the environment variables from section 1 in Vercel:
 ### D. Configure Domain
 
 1. Go to **Settings** → **Domains**
-2. Add your custom domain (e.g., `app.yourdomain.com`)
+2. Add your custom domain (e.g., `lilwidget.com` or `app.lilwidget.com`)
 3. Follow DNS configuration instructions
 4. Wait for SSL certificate to provision (~5 minutes)
 
@@ -314,9 +320,9 @@ Add all the environment variables from section 1 in Vercel:
 
   <!-- Replace with your production widget -->
   <script
-    src="https://yourdomain.com/widget.js"
+    src="https://lilwidget.com/widget.js"
     data-id="YOUR_WIDGET_ID"
-    data-base-url="https://yourdomain.com">
+    data-base-url="https://lilwidget.com">
   </script>
 </body>
 </html>
@@ -400,4 +406,6 @@ If something goes wrong:
 
 ---
 
-**Last Updated:** January 2025
+**Last Updated:** 2025-11-12
+**Deployment Status:** ✅ Complete - In Production
+**Production URL:** https://lilwidget.com

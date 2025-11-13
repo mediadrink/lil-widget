@@ -189,14 +189,15 @@ export default function AdminConsolePage(
   }
 
   // 🔧 Embed origin (avoid SSR/CSR mismatch)
-  const [embedOrigin, setEmbedOrigin] = React.useState<string>(
-    process.env.NEXT_PUBLIC_EMBED_ORIGIN || ""
-  );
+  const [embedOrigin, setEmbedOrigin] = React.useState<string>("");
+
   React.useEffect(() => {
-    if (!embedOrigin && typeof window !== "undefined") {
+    if (typeof window !== "undefined") {
+      // Always use window.location.origin in browser to ensure correct URL
+      // This works for both dev (localhost:3000) and production (lilwidget.com)
       setEmbedOrigin(window.location.origin);
     }
-  }, [embedOrigin]);
+  }, []);
 
   React.useEffect(() => {
     (async () => {

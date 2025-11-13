@@ -2,6 +2,8 @@
 
 An AI-powered embeddable chat widget platform that learns from your website and gets smarter over time.
 
+**Status:** 🚀 Launched & in production!
+
 ## 🎯 What It Does
 
 Lil Widget allows you to:
@@ -307,35 +309,38 @@ CREATE POLICY "Users can manage rules for own widgets"
 -- (Visitors need to read/write, but filtered by widget_id)
 ```
 
-## 🚧 Roadmap / TODO
+## ✅ Launched Features
 
-### High Priority
-- [ ] Conversation context (multi-turn conversations with history)
+### Core Features (Completed)
+- ✅ Conversation context (multi-turn conversations with history)
+- ✅ Widget themes and customization (colors, logo, position)
+- ✅ Collapsible widget (minimize/maximize)
+- ✅ Typing indicators
+- ✅ Mobile optimization
+- ✅ Deep website crawling for knowledge base
+- ✅ Guided onboarding wizard
+- ✅ Error handling with retry logic
+
+### Future Enhancements
 - [ ] Rate limiting for API endpoints
 - [ ] Visitor identification (fingerprinting or sessions)
-- [ ] Analytics dashboard (messages/day, response time, etc.)
-
-### Medium Priority
-- [ ] Widget themes/templates
-- [ ] Collapsible widget (minimize/maximize)
-- [ ] Typing indicators (streaming responses)
+- [ ] Advanced analytics dashboard
+- [ ] Streaming responses
 - [ ] File/image support
 - [ ] Multi-language support
-
-### Low Priority
 - [ ] Enable Stripe subscriptions
 - [ ] A/B testing for rules
 - [ ] Export conversations as CSV
-- [ ] Webhook notifications for new messages
-- [ ] Custom branding (remove "Lil Widget" label)
+- [ ] Webhook notifications
+- [ ] Integrations (Slack, email, CRM)
 
 ## 🐛 Known Issues
 
-1. **Conversation context**: Currently each message is independent - need to pass conversation history to OpenAI
-2. **No rate limiting**: API endpoints are unprotected (add middleware)
-3. **Public widget.js**: Served as static file (consider CDN)
-4. **Message count**: `conversations.message_count` not auto-updated (needs trigger)
-5. **No error tracking**: Add Sentry or similar
+1. **No rate limiting**: API endpoints could use rate limiting middleware
+2. **Public widget.js**: Served as static file (consider CDN for better performance)
+3. **Message count**: `conversations.message_count` not auto-updated (needs trigger)
+4. **No error tracking**: Consider adding Sentry or similar for production monitoring
+5. **Visitor tracking**: Could improve visitor identification/fingerprinting
 
 ## 📝 Development Notes
 
