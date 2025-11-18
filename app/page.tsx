@@ -214,7 +214,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="mx-auto max-w-6xl px-6 py-24">
+      <section id="pricing" className="mx-auto max-w-7xl px-6 py-24">
         <h2 className="text-4xl font-bold text-center mb-4">
           Simple, Transparent Pricing
         </h2>
@@ -222,7 +222,7 @@ export default function LandingPage() {
           Start free, upgrade when you're ready. No hidden fees.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {/* Basic Plan */}
           <div className="bg-white rounded-2xl border-2 border-neutral-200 p-8 shadow-sm">
             <h3 className="text-2xl font-bold mb-2">Basic</h3>
@@ -233,12 +233,12 @@ export default function LandingPage() {
             <p className="text-neutral-600 mb-6">
               Perfect for getting started
             </p>
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm">50 conversations per month</span>
+                <span className="text-sm">50 conversations/month</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,7 +256,7 @@ export default function LandingPage() {
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm">Custom personality & rules</span>
+                <span className="text-sm">Custom personality</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,12 +265,6 @@ export default function LandingPage() {
                 <span className="text-sm">Lil' Widget branding</span>
               </li>
             </ul>
-            <button
-              onClick={() => setShowSignup(true)}
-              className="w-full rounded-lg border-2 border-neutral-900 text-neutral-900 font-medium px-6 py-3 hover:bg-neutral-50 transition-colors"
-            >
-              Get Started Free
-            </button>
           </div>
 
           {/* Growth Plan */}
@@ -286,24 +280,24 @@ export default function LandingPage() {
             <p className="text-neutral-600 mb-6">
               For growing businesses
             </p>
-            <ul className="space-y-3 mb-8">
+            <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm font-semibold">500 conversations per month</span>
+                <span className="text-sm font-semibold">500 conversations/month</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm font-semibold">2 widgets (A/B testing)</span>
+                <span className="text-sm font-semibold">2 widgets</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm font-semibold">Expanded website crawl (10+ pages)</span>
+                <span className="text-sm font-semibold">Expanded crawl (10+ pages)</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -315,7 +309,7 @@ export default function LandingPage() {
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span className="text-sm font-semibold">Daily conversation insights</span>
+                <span className="text-sm font-semibold">Conversation insights</span>
               </li>
               <li className="flex items-start gap-3">
                 <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -324,13 +318,69 @@ export default function LandingPage() {
                 <span className="text-sm font-semibold">Email support</span>
               </li>
             </ul>
-            <button
-              onClick={() => setShowSignup(true)}
-              className="w-full rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-3 transition-colors shadow-md"
-            >
-              Start with Growth
-            </button>
           </div>
+
+          {/* Enterprise Plan */}
+          <div className="bg-white rounded-2xl border-2 border-neutral-900 p-8 shadow-sm">
+            <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-4xl font-bold">Custom</span>
+            </div>
+            <p className="text-neutral-600 mb-6">
+              For large organizations
+            </p>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Unlimited conversations</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Unlimited widgets</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Custom bot development</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Custom styling</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Personalized onboarding</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-sm font-semibold">Dedicated support</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Single Get Started Button */}
+        <div className="text-center">
+          <button
+            onClick={() => setShowSignup(true)}
+            className="inline-block rounded-lg bg-amber-400 hover:bg-amber-500 text-neutral-900 font-medium px-12 py-4 text-lg transition-colors shadow-md"
+          >
+            Get Started Free
+          </button>
+          <p className="text-sm text-neutral-500 mt-4">
+            Start with Basic, upgrade anytime • No credit card required
+          </p>
         </div>
       </section>
 
