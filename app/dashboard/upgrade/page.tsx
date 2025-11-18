@@ -56,12 +56,16 @@ function UpgradePageContent() {
   }, [router]);
 
   async function handleUpgradeClick() {
+    console.log("Upgrade button clicked!");
+
     if (!user?.email) {
       alert("User information not loaded. Please refresh the page and try again.");
       return;
     }
 
+    console.log("Creating subscription for:", user.email);
     setUpgrading(true);
+
     try {
       const res = await fetch("/api/create-subscription", {
         method: "POST",
@@ -72,16 +76,27 @@ function UpgradePageContent() {
         }),
       });
 
+      console.log("Subscription API response status:", res.status);
+
       if (!res.ok) {
         const data = await res.json();
+        console.error("Subscription API error:", data);
         throw new Error(data.error || "Failed to create subscription");
       }
 
-      const { clientSecret } = await res.json();
+      const data = await res.json();
+      console.log("Subscription data received:", data);
+
+      if (!data.clientSecret) {
+        console.error("No clientSecret in response:", data);
+        throw new Error("No payment client secret received");
+      }
 
       // Show payment form
-      setPaymentClientSecret(clientSecret);
+      console.log("Setting clientSecret and showing payment form");
+      setPaymentClientSecret(data.clientSecret);
       setShowPaymentForm(true);
+      console.log("Payment form should now be visible");
     } catch (err: any) {
       console.error("Upgrade error:", err);
       alert(err.message || "Failed to start payment. Please try again.");
@@ -251,6 +266,14 @@ function UpgradePageContent() {
                     </div>
                   </li>
                 </ul>
+
+                {/* Debug info in development */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <div>showPaymentForm: {showPaymentForm.toString()}</div>
+                    <div>paymentClientSecret: {paymentClientSecret ? 'present' : 'null'}</div>
+                  </div>
+                )}
 
                 {showPaymentForm && paymentClientSecret ? (
                   <div>
