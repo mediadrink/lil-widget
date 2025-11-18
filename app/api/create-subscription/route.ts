@@ -37,6 +37,7 @@ export async function POST(req: Request) {
       payment_behavior: "default_incomplete",
       payment_settings: {
         save_default_payment_method: "on_subscription",
+        payment_method_types: ["card"],
       },
       expand: ["latest_invoice.payment_intent"],
       metadata: {
@@ -70,21 +71,37 @@ export async function POST(req: Request) {
     console.log("💰 Invoice total:", latestInvoice?.total);
     console.log("💰 Invoice payment_intent (raw):", latestInvoice?.payment_intent);
 
-    const paymentIntent = latestInvoice?.payment_intent;
+    let paymentIntent = latestInvoice?.payment_intent;
     console.log("💳 Payment intent type:", typeof paymentIntent);
     console.log("💳 Payment intent ID:", typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id);
     console.log("💳 Payment intent status:", typeof paymentIntent === 'object' ? paymentIntent?.status : 'N/A');
+
+    // If payment_intent is missing, try to finalize the invoice to create one
+    if (!paymentIntent && latestInvoice?.id && latestInvoice?.status === 'open') {
+      console.log("⚠️ No payment intent found, attempting to finalize invoice...");
+      try {
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(latestInvoice.id, {
+          expand: ['payment_intent'],
+        });
+        console.log("✅ Invoice finalized");
+        paymentIntent = finalizedInvoice.payment_intent;
+        console.log("💳 New payment intent:", paymentIntent ? 'created' : 'still missing');
+      } catch (finalizeError) {
+        console.error("❌ Failed to finalize invoice:", finalizeError);
+      }
+    }
 
     const clientSecret = typeof paymentIntent === 'object' ? paymentIntent?.client_secret : null;
 
     console.log("🔑 Client secret:", clientSecret ? "✅ present" : "❌ missing");
 
     if (!clientSecret) {
-      console.error("❌ No client secret found");
+      console.error("❌ No client secret found after all attempts");
       console.error("Debug info:", {
         subscriptionId: subscription.id,
         subscriptionStatus: subscription.status,
         latestInvoiceType: typeof latestInvoice,
+        latestInvoiceStatus: latestInvoice?.status,
         paymentIntentType: typeof paymentIntent,
         paymentIntentStatus: typeof paymentIntent === 'object' ? paymentIntent?.status : 'N/A'
       });
