@@ -76,18 +76,36 @@ export async function POST(req: Request) {
     console.log("💳 Payment intent ID:", typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id);
     console.log("💳 Payment intent status:", typeof paymentIntent === 'object' ? paymentIntent?.status : 'N/A');
 
-    // If payment_intent is missing, try to finalize the invoice to create one
-    if (!paymentIntent && latestInvoice?.id && latestInvoice?.status === 'open') {
-      console.log("⚠️ No payment intent found, attempting to finalize invoice...");
+    // If payment_intent is missing, manually create one
+    if (!paymentIntent && latestInvoice?.id && latestInvoice?.amount_due) {
+      console.log("⚠️ No payment intent found, creating one manually...");
       try {
-        const finalizedInvoice = await stripe.invoices.finalizeInvoice(latestInvoice.id, {
-          expand: ['payment_intent'],
-        }) as any;
-        console.log("✅ Invoice finalized");
-        paymentIntent = finalizedInvoice.payment_intent;
-        console.log("💳 New payment intent:", paymentIntent ? 'created' : 'still missing');
-      } catch (finalizeError) {
-        console.error("❌ Failed to finalize invoice:", finalizeError);
+        const createdPaymentIntent = await stripe.paymentIntents.create({
+          amount: latestInvoice.amount_due,
+          currency: latestInvoice.currency || 'usd',
+          customer: customer.id,
+          metadata: {
+            invoice_id: latestInvoice.id,
+            subscription_id: subscription.id,
+            user_id: user.id,
+          },
+          setup_future_usage: 'off_session',
+        });
+        console.log("✅ Payment intent created manually:", createdPaymentIntent.id);
+        paymentIntent = createdPaymentIntent;
+        console.log("💳 Manual payment intent status:", paymentIntent.status);
+
+        // Update the invoice to use this payment intent
+        try {
+          await stripe.invoices.update(latestInvoice.id, {
+            default_payment_method: undefined, // Clear to allow payment_intent
+          });
+          console.log("✅ Invoice updated to use manual payment intent");
+        } catch (updateError) {
+          console.log("⚠️ Could not update invoice (non-critical):", updateError);
+        }
+      } catch (createError) {
+        console.error("❌ Failed to create payment intent:", createError);
       }
     }
 
