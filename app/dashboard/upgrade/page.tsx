@@ -28,20 +28,27 @@ function UpgradePageContent() {
         // Get user info
         const userRes = await fetch("/api/auth/me");
         const userData = await userRes.json();
+
+        console.log("User data loaded:", userData);
+
         if (!userData.user) {
+          console.log("No user found, redirecting to login");
           router.push("/login");
           return;
         }
         setUser(userData.user);
+        console.log("User set:", userData.user);
 
         // Get usage stats
         const statsRes = await fetch("/api/usage/stats");
         const statsData = await statsRes.json();
+        console.log("Stats loaded:", statsData);
         setStats(statsData);
       } catch (err) {
         console.error("Failed to load user data:", err);
       } finally {
         setLoading(false);
+        console.log("Loading complete");
       }
     }
 
@@ -271,9 +278,17 @@ function UpgradePageContent() {
                       onClick={handleUpgradeClick}
                       disabled={upgrading || loading || !user}
                       className="w-full py-4 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors text-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={!user ? "Loading user data..." : loading ? "Loading..." : ""}
                     >
-                      {upgrading ? "Loading payment..." : loading ? "Loading..." : "Upgrade to Growth"}
+                      {upgrading ? "Loading payment..." : loading ? "Loading user data..." : !user ? "Loading..." : "Upgrade to Growth"}
                     </button>
+
+                    {/* Debug info in development */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="text-xs text-neutral-500 mt-2 text-center">
+                        Debug: loading={loading.toString()}, user={user ? 'loaded' : 'null'}, upgrading={upgrading.toString()}
+                      </div>
+                    )}
 
                     <p className="text-xs text-neutral-500 text-center mt-4">
                       14-day money-back guarantee • Cancel anytime
