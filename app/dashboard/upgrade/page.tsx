@@ -3,6 +3,11 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
+import dynamic from "next/dynamic";
+
+const StripePaymentForm = dynamic(() => import("@/app/components/StripePaymentForm"), {
+  ssr: false,
+});
 
 function UpgradePageContent() {
   const searchParams = useSearchParams();
@@ -13,6 +18,9 @@ function UpgradePageContent() {
     conversationsThisMonth: 0,
     totalWidgets: 0,
   });
+  const [upgrading, setUpgrading] = useState(false);
+  const [paymentClientSecret, setPaymentClientSecret] = useState<string | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
 
   useEffect(() => {
     async function loadUserData() {
@@ -39,6 +47,47 @@ function UpgradePageContent() {
 
     loadUserData();
   }, [router]);
+
+  async function handleUpgradeClick() {
+    setUpgrading(true);
+    try {
+      const res = await fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID || "price_1SOtw9EVxGVhW8Bvp0U9ef3u"
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create subscription");
+      }
+
+      const { clientSecret } = await res.json();
+
+      // Show payment form
+      setPaymentClientSecret(clientSecret);
+      setShowPaymentForm(true);
+    } catch (err: any) {
+      console.error("Upgrade error:", err);
+      alert(err.message || "Failed to start payment. Please try again.");
+    } finally {
+      setUpgrading(false);
+    }
+  }
+
+  function handlePaymentSuccess() {
+    // Refresh user data to get new subscription tier
+    window.location.href = "/dashboard/upgrade?success=true";
+  }
+
+  function handlePaymentError(error: string) {
+    alert(`Payment failed: ${error}`);
+    setShowPaymentForm(false);
+    setPaymentClientSecret(null);
+  }
 
   if (loading) {
     return (
@@ -191,16 +240,41 @@ function UpgradePageContent() {
                   </li>
                 </ul>
 
-                <button
-                  onClick={() => alert("Contact support to upgrade: support@lilwidget.com")}
-                  className="w-full py-4 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors text-lg shadow-md"
-                >
-                  Upgrade to Growth
-                </button>
+                {showPaymentForm && paymentClientSecret ? (
+                  <div>
+                    <div className="mb-4">
+                      <p className="text-sm text-neutral-600 mb-4">Enter your payment details to upgrade to Growth</p>
+                    </div>
+                    <StripePaymentForm
+                      clientSecret={paymentClientSecret}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                    />
+                    <button
+                      onClick={() => {
+                        setShowPaymentForm(false);
+                        setPaymentClientSecret(null);
+                      }}
+                      className="mt-3 text-sm text-neutral-500 hover:text-neutral-700 underline w-full text-center"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleUpgradeClick}
+                      disabled={upgrading}
+                      className="w-full py-4 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors text-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {upgrading ? "Loading payment..." : "Upgrade to Growth"}
+                    </button>
 
-                <p className="text-xs text-neutral-500 text-center mt-4">
-                  14-day money-back guarantee • Cancel anytime
-                </p>
+                    <p className="text-xs text-neutral-500 text-center mt-4">
+                      14-day money-back guarantee • Cancel anytime
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 

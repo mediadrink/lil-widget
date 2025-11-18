@@ -106,6 +106,7 @@ _Nothing currently in progress_
 - [x] Archived sprint/roadmap docs
 - [x] Added production URL (lilwidget.com) to all documentation
 - [x] Updated feedback collection strategy (use Lil Widget itself!)
+- [x] Fixed embed code showing localhost:3000 → now shows production URL correctly
 
 ### Previous (Week 1-2)
 - [x] Guided onboarding wizard (3 steps)

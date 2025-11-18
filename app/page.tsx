@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import HomepageDemoWidget from "@/components/HomepageDemoWidget";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -136,47 +137,8 @@ export default function LandingPage() {
       </section>
 
       {/* Demo Preview */}
-      <section className="mx-auto max-w-4xl px-6 py-12">
-        <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-12 shadow-sm">
-          <div className="bg-white border border-neutral-300 rounded-xl p-6 shadow-lg max-w-md mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <svg width="24" height="24" viewBox="0 0 170.64 172.84" className="text-amber-500">
-                <path fill="currentColor" d="M170.07,71.44c-1.75-9.4-21.37-2.94-26.48-7.52-.63-.56-5.41-10.62-5.28-11.34.39-2.25,9.11-12.29,10.97-15.99,3.17-6.35,1.66-7.59-3.16-12.19-1.93-1.84-18.53-14.59-19.95-15.04-9.59-3.04-14.96,9.81-20.53,15.66l-1.8.66-13.22-3.78c-5.9-9.73-2.71-23.6-17.75-21.73-3.78.47-20.03,4.44-23.03,5.97-9.64,4.9-1.35,19.57-2.17,27.76l-10.04,7.63c-6.53-.99-19.04-9.1-24.77-4.63C10.25,38.9-.21,62.04,0,65.42c.39,6.33,15.69,12.02,20.11,16.19-.35,3.01.77,7.66-.51,10.3-1.34,2.76-14.37,8.72-17.2,11.31-3.46,3.17-2.34,7.1-1.08,10.96,1.29,3.96,7.04,16.09,9.21,19.79,6.57,11.23,22.21-5.24,29.11-1.13.84.5,8.14,7.16,8.28,7.76-.47,8.53-7.95,21.71,2.6,26.37,4.02,1.77,25.31,6.78,28.86,5.73,5.09-1.51,8.94-17.61,10.94-22.55l14.33-2.85c7.02,5.54,11.26,20.04,21.79,15.45,1.97-.86,19.93-14.43,21.7-16.28,7.74-8.1-6.62-18.92-9.84-26.23l4.99-12.13c7.03-3.15,25.51,2.76,26.86-7.64.61-4.71.73-24.68-.08-29.02ZM84.35,137.79c-28.75,0-52.05-23.3-52.05-52.05s23.3-52.05,52.05-52.05,52.05,23.3,52.05,52.05-23.30,52.05-52.05,52.05Z"/>
-              </svg>
-              <h4 className="text-lg font-semibold text-neutral-900">This is a Lil' Widget!</h4>
-            </div>
-
-            <div className="space-y-3 mb-6">
-              <div className="bg-white border border-neutral-300 rounded-lg p-3 text-sm">
-                Hi! How can I help you today?
-              </div>
-              <div className="bg-[#007aff] text-white rounded-lg p-3 text-sm ml-12 text-right">
-                What are your hours?
-              </div>
-              <div className="bg-white border border-neutral-300 rounded-lg p-3 text-sm">
-                We're open Monday-Friday, 9am-5pm EST. Need help outside those hours? Leave a message and we'll get back to you!
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Type your message..."
-                className="flex-1 border border-neutral-400 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#007aff]"
-                disabled
-              />
-              <button
-                className="bg-[#007aff] text-white rounded-lg px-6 font-semibold text-sm"
-                disabled
-              >
-                Send
-              </button>
-            </div>
-          </div>
-          <p className="text-center text-sm text-neutral-500 mt-6">
-            ↑ Live demo of a Lil' Widget in action
-          </p>
-        </div>
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <HomepageDemoWidget />
       </section>
 
       {/* Features Section */}

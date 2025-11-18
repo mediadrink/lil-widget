@@ -4,6 +4,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { LilHelperButton } from "@/components/LilHelperButton";
+import { ChatMessage, ChatMessagesContainer } from "@/components/ChatMessage";
 
 type Conversation = {
   id: string;
@@ -192,10 +193,10 @@ export default function ConversationsPage() {
           ) : messages.length === 0 ? (
             <div className="text-sm text-neutral-600 text-center py-12">No messages in this conversation.</div>
           ) : (
-            <div className="flex flex-col gap-4 max-h-[72vh] overflow-auto">
+            <ChatMessagesContainer variant="dashboard">
               {messages.map((m) => (
                 <div key={m.id} className="border border-neutral-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div
                       className={cx(
                         "text-xs font-semibold uppercase tracking-wide",
@@ -208,7 +209,12 @@ export default function ConversationsPage() {
                       {new Date(m.created_at).toLocaleString()}
                     </div>
                   </div>
-                  <div className="text-sm text-neutral-900 whitespace-pre-wrap leading-relaxed">{m.content}</div>
+                  <ChatMessage
+                    role={m.role}
+                    content={m.content}
+                    variant="dashboard"
+                    className="!ml-0 !mr-0"
+                  />
 
                   {/* Promote to rule */}
                   <div className="mt-3 flex justify-end">
@@ -230,7 +236,7 @@ export default function ConversationsPage() {
                   </div>
                 </div>
               ))}
-            </div>
+            </ChatMessagesContainer>
           )}
         </section>
       </div>

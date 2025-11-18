@@ -30,8 +30,12 @@ export async function POST(req: NextRequest) {
 
     if (resendError) {
       console.error("Resend verification error:", resendError);
+      // Return more detailed error for debugging
       return NextResponse.json(
-        { error: "Failed to resend verification email" },
+        {
+          error: `Failed to resend verification email: ${resendError.message}`,
+          details: resendError
+        },
         { status: 500 }
       );
     }
