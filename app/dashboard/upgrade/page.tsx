@@ -26,7 +26,7 @@ function UpgradePageContent() {
     async function loadUserData() {
       try {
         // Get user info
-        const userRes = await fetch("/api/auth/me");
+        const userRes = await fetch("/api/auth/user");
         const userData = await userRes.json();
 
         console.log("User data loaded:", userData);
