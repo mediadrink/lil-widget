@@ -64,6 +64,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Check invoice details
+    console.log("💰 Invoice status:", latestInvoice?.status);
+    console.log("💰 Invoice amount_due:", latestInvoice?.amount_due);
+    console.log("💰 Invoice total:", latestInvoice?.total);
+    console.log("💰 Invoice payment_intent (raw):", latestInvoice?.payment_intent);
+
     const paymentIntent = latestInvoice?.payment_intent;
     console.log("💳 Payment intent type:", typeof paymentIntent);
     console.log("💳 Payment intent ID:", typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id);
