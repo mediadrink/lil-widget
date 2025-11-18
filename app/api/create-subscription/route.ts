@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       try {
         const finalizedInvoice = await stripe.invoices.finalizeInvoice(latestInvoice.id, {
           expand: ['payment_intent'],
-        });
+        }) as any;
         console.log("✅ Invoice finalized");
         paymentIntent = finalizedInvoice.payment_intent;
         console.log("💳 New payment intent:", paymentIntent ? 'created' : 'still missing');
