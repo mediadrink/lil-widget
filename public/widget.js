@@ -178,6 +178,39 @@
   // PHASE 2: FULL CHAT INTERFACE (loads on click)
   // ============================================
 
+  // Container reference (set when full widget loads)
+  let container = null;
+
+  // Position container based on config
+  function positionContainerFn() {
+    if (!container) return;
+
+    const isMobile = window.innerWidth <= 480;
+    const position = widgetConfig?.position || "bottom-right";
+
+    // On mobile, use full-screen (CSS handles this), so clear inline styles
+    if (isMobile) {
+      container.style.left = "";
+      container.style.right = "";
+      container.style.transform = "";
+      return;
+    }
+
+    // Desktop positioning
+    container.style.left = "auto";
+    container.style.right = "auto";
+    container.style.transform = "none";
+
+    if (position === "bottom-center") {
+      container.style.left = "50%";
+      container.style.transform = "translateX(-50%)";
+    } else if (position.includes("right")) {
+      container.style.right = "20px";
+    } else if (position.includes("left")) {
+      container.style.left = "20px";
+    }
+  }
+
   function loadFullWidget() {
     if (isFullWidgetLoaded) return;
     isFullWidgetLoaded = true;
@@ -212,6 +245,9 @@
         width: 350px;
         max-width: calc(100vw - 40px);
         box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
       }
       .widget-header {
         margin: 0 0 1rem 0;
@@ -429,8 +465,8 @@
     const backdrop = document.createElement("div");
     backdrop.className = "widget-mobile-backdrop";
 
-    // Create full chat container
-    const container = document.createElement("div");
+    // Create full chat container (use outer scope variable)
+    container = document.createElement("div");
     container.className = "widget-container";
 
     // Show branding for free tier
@@ -804,6 +840,9 @@
       }
     }
 
+    // Position container (always call, even without config - uses default)
+    positionContainerFn();
+
     // Add backdrop and container to shadow root
     shadowRoot.appendChild(backdrop);
     shadowRoot.appendChild(container);
@@ -853,6 +892,8 @@
   window.addEventListener("resize", () => {
     if (!isFullWidgetLoaded) {
       positionBubble();
+    } else {
+      positionContainerFn();
     }
   });
 
