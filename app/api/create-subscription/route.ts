@@ -45,24 +45,43 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("Subscription created:", subscription.id);
-    console.log("Latest invoice type:", typeof subscription.latest_invoice);
-    console.log("Latest invoice:", subscription.latest_invoice);
+    console.log("✅ Subscription created:", subscription.id);
+    console.log("📋 Subscription status:", subscription.status);
+    console.log("📄 Latest invoice type:", typeof subscription.latest_invoice);
 
     // Handle expanded latest_invoice (will be Invoice object when expanded)
     const latestInvoice = subscription.latest_invoice as any;
+
+    console.log("📄 Is latest_invoice a string?", typeof latestInvoice === 'string');
+    console.log("📄 Latest invoice ID:", typeof latestInvoice === 'string' ? latestInvoice : latestInvoice?.id);
+
+    if (typeof latestInvoice === 'string') {
+      console.error("❌ PROBLEM: latest_invoice is a string ID, not expanded object!");
+      console.error("❌ This means expand parameter didn't work");
+      return NextResponse.json(
+        { error: "Stripe configuration error: invoice not expanded" },
+        { status: 500 }
+      );
+    }
+
     const paymentIntent = latestInvoice?.payment_intent;
+    console.log("💳 Payment intent type:", typeof paymentIntent);
+    console.log("💳 Payment intent ID:", typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id);
+    console.log("💳 Payment intent status:", typeof paymentIntent === 'object' ? paymentIntent?.status : 'N/A');
 
-    console.log("Payment intent:", paymentIntent);
-    console.log("Payment intent type:", typeof paymentIntent);
+    const clientSecret = typeof paymentIntent === 'object' ? paymentIntent?.client_secret : null;
 
-    const clientSecret = paymentIntent?.client_secret;
-
-    console.log("Client secret:", clientSecret ? "present" : "missing");
+    console.log("🔑 Client secret:", clientSecret ? "✅ present" : "❌ missing");
 
     if (!clientSecret) {
-      console.error("No client secret found in subscription response");
-      console.error("Full subscription object:", JSON.stringify(subscription, null, 2));
+      console.error("❌ No client secret found");
+      console.error("Debug info:", {
+        subscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        latestInvoiceType: typeof latestInvoice,
+        paymentIntentType: typeof paymentIntent,
+        paymentIntentStatus: typeof paymentIntent === 'object' ? paymentIntent?.status : 'N/A'
+      });
       return NextResponse.json(
         { error: "Failed to get payment details from Stripe" },
         { status: 500 }
