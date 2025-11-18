@@ -8,6 +8,7 @@
  * - "demo": Homepage demo widget
  */
 
+import * as React from "react";
 import { parseMarkdown } from "@/utils/markdown";
 
 type ChatMessageProps = {
@@ -65,20 +66,20 @@ type ChatMessagesContainerProps = {
   className?: string;
 };
 
-export function ChatMessagesContainer({
-  children,
-  variant = "widget",
-  className = "",
-}: ChatMessagesContainerProps) {
-  const variantStyles = {
-    widget: "space-y-3 mb-6 max-h-80 overflow-y-auto",
-    dashboard: "flex flex-col gap-4 max-h-[72vh] overflow-y-auto",
-    demo: "space-y-3 mb-6 max-h-80 overflow-y-auto",
-  };
+export const ChatMessagesContainer = React.forwardRef<HTMLDivElement, ChatMessagesContainerProps>(
+  ({ children, variant = "widget", className = "" }, ref) => {
+    const variantStyles = {
+      widget: "space-y-3 mb-6 max-h-80 overflow-y-auto",
+      dashboard: "flex flex-col gap-4 max-h-[72vh] overflow-y-auto",
+      demo: "space-y-3 mb-6 max-h-80 overflow-y-auto",
+    };
 
-  return (
-    <div className={`${variantStyles[variant]} ${className}`}>
-      {children}
-    </div>
-  );
-}
+    return (
+      <div ref={ref} className={`${variantStyles[variant]} ${className}`}>
+        {children}
+      </div>
+    );
+  }
+);
+
+ChatMessagesContainer.displayName = "ChatMessagesContainer";
