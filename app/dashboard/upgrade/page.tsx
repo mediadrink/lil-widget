@@ -49,6 +49,11 @@ function UpgradePageContent() {
   }, [router]);
 
   async function handleUpgradeClick() {
+    if (!user?.email) {
+      alert("User information not loaded. Please refresh the page and try again.");
+      return;
+    }
+
     setUpgrading(true);
     try {
       const res = await fetch("/api/create-subscription", {
@@ -264,10 +269,10 @@ function UpgradePageContent() {
                   <>
                     <button
                       onClick={handleUpgradeClick}
-                      disabled={upgrading}
+                      disabled={upgrading || loading || !user}
                       className="w-full py-4 px-6 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors text-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {upgrading ? "Loading payment..." : "Upgrade to Growth"}
+                      {upgrading ? "Loading payment..." : loading ? "Loading..." : "Upgrade to Growth"}
                     </button>
 
                     <p className="text-xs text-neutral-500 text-center mt-4">
