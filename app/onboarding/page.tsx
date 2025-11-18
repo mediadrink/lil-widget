@@ -63,6 +63,9 @@ export default function OnboardingPage() {
   const [resendCooldown, setResendCooldown] = React.useState(0);
   const [checkingVerification, setCheckingVerification] = React.useState(false);
 
+  // Copy embed code state
+  const [embedCopied, setEmbedCopied] = React.useState(false);
+
   // Check user's subscription tier and email verification on mount
   React.useEffect(() => {
     async function checkUser() {
@@ -1204,12 +1207,19 @@ export default function OnboardingPage() {
             </div>
 
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(embedCode);
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(embedCode);
+                  setEmbedCopied(true);
+                  setTimeout(() => setEmbedCopied(false), 2000);
+                } catch (err) {
+                  console.error("Failed to copy:", err);
+                  alert("Failed to copy code. Please select and copy manually.");
+                }
               }}
               className="w-full rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white font-semibold px-6 py-3 transition-colors mb-6"
             >
-              📋 Copy Embed Code
+              {embedCopied ? "✅ Copied!" : "📋 Copy Embed Code"}
             </button>
 
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-5 mb-6">

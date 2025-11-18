@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import HomepageDemoWidget from "@/components/HomepageDemoWidget";
 
 export default function LandingPage() {
@@ -686,6 +687,14 @@ export default function LandingPage() {
           </div>
         </div>
       )}
+
+      {/* Lil Widget - Dogfooding our own product on homepage! */}
+      <Script
+        src="https://www.lilwidget.com/widget.js"
+        data-id="6a811b29-68e7-423c-9163-e7ef316af1b1"
+        data-base-url="https://www.lilwidget.com"
+        strategy="lazyOnload"
+      />
     </div>
   );
 }
