@@ -45,9 +45,29 @@ export async function POST(req: Request) {
       },
     });
 
+    console.log("Subscription created:", subscription.id);
+    console.log("Latest invoice type:", typeof subscription.latest_invoice);
+    console.log("Latest invoice:", subscription.latest_invoice);
+
     // Handle expanded latest_invoice (will be Invoice object when expanded)
     const latestInvoice = subscription.latest_invoice as any;
-    const clientSecret = latestInvoice?.payment_intent?.client_secret;
+    const paymentIntent = latestInvoice?.payment_intent;
+
+    console.log("Payment intent:", paymentIntent);
+    console.log("Payment intent type:", typeof paymentIntent);
+
+    const clientSecret = paymentIntent?.client_secret;
+
+    console.log("Client secret:", clientSecret ? "present" : "missing");
+
+    if (!clientSecret) {
+      console.error("No client secret found in subscription response");
+      console.error("Full subscription object:", JSON.stringify(subscription, null, 2));
+      return NextResponse.json(
+        { error: "Failed to get payment details from Stripe" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       clientSecret,
