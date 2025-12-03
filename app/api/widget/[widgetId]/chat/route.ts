@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/utils/supabase/serverAdmin";
 import { OpenAI } from "openai";
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rateLimit";
+import { sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -264,17 +265,45 @@ export async function POST(
     // Rate limiting: Check if user has exceeded free tier limit
     // Only enforce when creating a NEW conversation (not continuing existing one)
     // AND only for non-test conversations (test conversations always allowed)
+    let conversationCount: number | null = null;
+    let ownerEmail: string | undefined;
+    let ownerName: string | undefined;
+    let notificationsSent: { warning?: boolean; paused?: boolean } = {};
+
     if (!conversationId && isTest !== true) {
       try {
         // Get widget owner's subscription tier
         const { data: { user: owner } } = await supabaseAdmin.auth.admin.getUserById(widget.owner_id);
         const subscriptionTier = owner?.user_metadata?.subscription_tier || "free";
+        ownerEmail = owner?.email;
+        ownerName = owner?.user_metadata?.full_name || owner?.email?.split('@')[0];
+        notificationsSent = owner?.user_metadata?.limit_notifications || {};
 
         // Only enforce limits for free tier
         if (subscriptionTier === "free") {
-          // Count conversations this month (excluding test conversations)
+          // Count conversations in current billing period (rolling 30 days from signup)
           const now = new Date();
-          const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+          const userCreatedAt = owner?.created_at ? new Date(owner.created_at) : now;
+
+          // Calculate the start of the current billing period
+          // Find how many complete 30-day cycles have passed since signup
+          const daysSinceSignup = Math.floor((now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+          const completeCycles = Math.floor(daysSinceSignup / 30);
+          const billingPeriodStart = new Date(userCreatedAt.getTime() + (completeCycles * 30 * 24 * 60 * 60 * 1000));
+
+          // Check if we're in a new billing period and need to reset notifications
+          const lastNotificationPeriod = owner?.user_metadata?.limit_notification_period;
+          const currentPeriod = completeCycles;
+          if (lastNotificationPeriod !== currentPeriod) {
+            // New billing period - reset notification flags
+            notificationsSent = {};
+            await supabaseAdmin.auth.admin.updateUserById(widget.owner_id, {
+              user_metadata: {
+                limit_notifications: {},
+                limit_notification_period: currentPeriod,
+              },
+            });
+          }
 
           // Get all widgets owned by this user
           const { data: userWidgets } = await supabaseAdmin
@@ -284,16 +313,37 @@ export async function POST(
 
           const widgetIds = userWidgets?.map((w) => w.id) || [];
 
-          // Count non-test conversations this month
+          // Count non-test conversations in current billing period
           const { count } = await supabaseAdmin
             .from("conversations")
             .select("id", { count: "exact", head: true })
             .in("widget_id", widgetIds)
-            .gte("created_at", startOfMonth.toISOString())
+            .gte("created_at", billingPeriodStart.toISOString())
             .eq("is_test", false);
+
+          conversationCount = count;
 
           // Free tier limit: 50 conversations per month
           if (count !== null && count >= 50) {
+            // Send paused notification if not already sent this month
+            if (ownerEmail && !notificationsSent.paused) {
+              try {
+                await sendEmail(ownerEmail, "limit-reached", {
+                  conversationsUsed: count,
+                  userName: ownerName,
+                });
+                // Mark notification as sent
+                await supabaseAdmin.auth.admin.updateUserById(widget.owner_id, {
+                  user_metadata: {
+                    limit_notifications: { ...notificationsSent, paused: true },
+                  },
+                });
+                console.log(`📧 Sent paused notification to ${ownerEmail}`);
+              } catch (emailError) {
+                console.error("Failed to send paused notification:", emailError);
+              }
+            }
+
             return new Response(
               JSON.stringify({
                 error: "Monthly conversation limit reached. Please upgrade your plan.",
@@ -309,6 +359,26 @@ export async function POST(
                 },
               }
             );
+          }
+
+          // Send warning notification at 40 conversations
+          if (count !== null && count >= 40 && !notificationsSent.warning && ownerEmail) {
+            try {
+              await sendEmail(ownerEmail, "limit-warning", {
+                conversationsUsed: count,
+                conversationsLeft: 50 - count,
+                userName: ownerName,
+              });
+              // Mark notification as sent
+              await supabaseAdmin.auth.admin.updateUserById(widget.owner_id, {
+                user_metadata: {
+                  limit_notifications: { ...notificationsSent, warning: true },
+                },
+              });
+              console.log(`📧 Sent warning notification to ${ownerEmail}`);
+            } catch (emailError) {
+              console.error("Failed to send warning notification:", emailError);
+            }
           }
         }
       } catch (rateLimitError) {

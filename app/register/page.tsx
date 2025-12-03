@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
+import { trackSignup } from "@/lib/analytics";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function RegisterPage() {
           setError(signUpError.message);
           return;
         }
+
+        // Track successful signup
+        trackSignup("email");
       } else {
         setError(signInError.message);
         return;

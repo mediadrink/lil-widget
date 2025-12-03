@@ -44,6 +44,7 @@ export async function POST(req: Request) {
         user_id: user.id,
         user_email: email,
       },
+      description: "Lil Widget - Growth Plan",
     });
 
     console.log("✅ Subscription created:", subscription.id);
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
             user_id: user.id,
           },
           setup_future_usage: 'off_session',
+          statement_descriptor: 'MEDIADRINK LILWIDGET',
         });
         console.log("✅ Payment intent created manually:", createdPaymentIntent.id);
         paymentIntent = createdPaymentIntent;

@@ -4,6 +4,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import dynamic from "next/dynamic";
+import { trackUpgradeStart, trackPurchase } from "@/lib/analytics";
 
 const StripePaymentForm = dynamic(() => import("@/app/components/StripePaymentForm"), {
   ssr: false,
@@ -63,6 +64,9 @@ function UpgradePageContent() {
       return;
     }
 
+    // Track upgrade flow start
+    trackUpgradeStart();
+
     console.log("Creating subscription for:", user.email);
     setUpgrading(true);
 
@@ -106,6 +110,8 @@ function UpgradePageContent() {
   }
 
   function handlePaymentSuccess() {
+    // Track successful purchase
+    trackPurchase();
     // Refresh user data to get new subscription tier
     window.location.href = "/dashboard/upgrade?success=true";
   }

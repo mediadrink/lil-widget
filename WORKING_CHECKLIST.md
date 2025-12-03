@@ -3,16 +3,38 @@
 > **Living document for tracking current work.**
 > Update at the end of each session. Keep it simple!
 
-**Last Updated:** 2025-11-12
-**Status:** 🚀 Production
+**Last Updated:** 2025-11-17
+**Status:** 🚀 Production - Payment Flow Working!
 
 ---
 
 ## 🔥 HIGH PRIORITY (Do Next)
 
+### Testing (Tomorrow)
+- [ ] End-to-end payment flow testing with test cards
+- [ ] Enforce conversation limits (50 free / 500 paid)
+- [ ] Mobile responsive testing across devices
+- [ ] Cross-browser testing (Chrome, Safari, Firefox)
+
+### SEO (Tomorrow)
+- [ ] Add meta tags and Open Graph tags
+- [ ] Generate sitemap.xml
+- [ ] Add robots.txt
+- [ ] Optimize page speed
+
+### Analytics (Tomorrow)
+- [ ] Set up Google Analytics or PostHog
+- [ ] Add conversion tracking (signups, upgrades)
+- [ ] Event tracking (widget installs, conversations)
+
+### Still TODO
+- [ ] Create new Stripe Price with statement descriptor "MEDIADRINK LILWIDGET"
+  - Go to Stripe Dashboard → Products → Add another price
+  - Set price: $19/month, statement descriptor: MEDIADRINK LILWIDGET
+  - Update STRIPE_PRICE_ID in Vercel and .env.local
+  - Archive old price
+- [ ] Switch Stripe to Test Mode for development
 - [ ] Set up error monitoring (Sentry or similar)
-- [ ] Add analytics tracking (PostHog, Mixpanel, or GA)
-- [ ] Embed Lil Widget on dashboard for user feedback (dogfooding!)
 - [ ] Monitor production errors and fix critical bugs
 
 ---
@@ -99,6 +121,19 @@ _Nothing currently in progress_
 
 ## ✅ RECENTLY COMPLETED
 
+### 2025-11-17 🎉 **MAJOR SESSION**
+- [x] **Fixed Stripe payment flow** - Users can now successfully upgrade and pay ($19/month)
+- [x] **Fixed Stripe webhook** - Changed URL from lilwidget.com to www.lilwidget.com (was causing 307 redirects)
+- [x] **Fixed widget positioning** - Widget bubble now properly opens chat interface
+- [x] **Added widget to homepage** - Dogfooding our own product on lilwidget.com
+- [x] **Redesigned homepage pricing** - 3-tier display (Basic, Growth, Enterprise)
+- [x] **Fixed upgrade page** - Corrected API endpoint, added null checks, better error handling
+- [x] **Fixed copy embed code** - Added "✅ Copied!" feedback
+- [x] **Manual PaymentIntent creation** - Workaround for subscriptions not auto-creating payment intents
+- [x] **Created manual upgrade script** - For users who paid but webhook failed
+- [x] **Comprehensive debugging** - Added emoji indicators to all server logs
+- [x] **Session documentation** - Created SESSION_2025-11-17.md with full details
+
 ### 2025-11-12
 - [x] Updated all docs to reflect launched status
 - [x] Created DEV_GUIDE.md for comprehensive dev reference
@@ -128,6 +163,30 @@ _Nothing currently in progress_
 
 ## 📝 SESSION NOTES
 
+### 2025-11-17
+**Focus:** Payment Flow, Widget Fixes, Homepage Updates
+
+**Major Accomplishments:**
+- ✅ Payment flow works end-to-end (Stripe live mode)
+- ✅ Webhook fixed (www subdomain issue resolved)
+- ✅ Widget properly displays and functions
+- ✅ Homepage pricing redesigned (3 tiers)
+- ✅ Dogfooding - widget live on lilwidget.com
+
+**Technical Fixes:**
+- Fixed PaymentIntent creation (manual fallback)
+- Fixed widget positioning (CSS + responsive)
+- Fixed API endpoint (auth/user not auth/me)
+- Added extensive debugging with emoji indicators
+
+**What's Ready:**
+- Users can sign up, onboard, and upgrade
+- Payment processing works ($19/month)
+- Webhooks automatically upgrade accounts
+- Widget embeds work on any site
+
+**Next Session:** Testing, SEO, Analytics
+
 ### 2025-11-12
 - Cleaned up all documentation
 - Created new dev guide and working checklist
@@ -140,18 +199,20 @@ _Nothing currently in progress_
 
 ## 🐛 BUGS TO FIX
 
-_Report bugs here as they're discovered_
-
--
+- [ ] Switch to Stripe test mode for development (currently live mode)
+- [ ] Conversation limits not enforced (should block at 50/500)
+- [ ] Branding removal not implemented for paid users
+- [ ] Expanded crawl not implemented for paid tier
 
 ---
 
 ## 💭 QUESTIONS / DECISIONS NEEDED
 
-- Should we enable Stripe billing now or wait for more users?
-- Which analytics platform to use?
+- ✅ ~~Should we enable Stripe billing?~~ **DONE - Working!**
+- Which analytics platform to use? (GA, PostHog, Mixpanel?)
 - What error monitoring tool? (Sentry recommended)
-- Should we build email notifications or Slack integration first?
+- Should we prioritize email notifications or Slack integration?
+- When to launch on Product Hunt / Hacker News?
 
 ---
 

@@ -21,6 +21,8 @@ export default function WidgetsListPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [isPaidUser, setIsPaidUser] = React.useState(false);
   const [crawlingWidgetId, setCrawlingWidgetId] = React.useState<string | null>(null);
+  const [conversationsThisMonth, setConversationsThisMonth] = React.useState<number>(0);
+  const [daysRemaining, setDaysRemaining] = React.useState<number>(30);
 
   React.useEffect(() => {
     (async () => {
@@ -30,6 +32,14 @@ export default function WidgetsListPage() {
         if (userRes.ok) {
           const userData = await userRes.json();
           setIsPaidUser(userData.user?.user_metadata?.subscription_tier === "paid");
+        }
+
+        // Load usage stats
+        const usageRes = await fetch("/api/usage/stats");
+        if (usageRes.ok) {
+          const usageData = await usageRes.json();
+          setConversationsThisMonth(usageData.conversationsThisMonth || 0);
+          setDaysRemaining(usageData.daysRemaining || 30);
         }
 
         // Load widgets
@@ -127,6 +137,68 @@ export default function WidgetsListPage() {
 
       {/* Body */}
       <div className="mx-auto max-w-6xl px-4 py-6">
+        {/* Conversation Usage Card */}
+        {!loading && (
+          <div className={`mb-6 rounded-xl border p-4 ${
+            !isPaidUser && conversationsThisMonth >= 50
+              ? 'bg-red-50 border-red-200'
+              : !isPaidUser && conversationsThisMonth >= 40
+                ? 'bg-yellow-50 border-yellow-200'
+                : 'bg-white'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold">
+                    {conversationsThisMonth}
+                  </span>
+                  <span className="text-neutral-500">
+                    / {isPaidUser ? '500' : '50'} conversations
+                  </span>
+                  <span className="text-neutral-400 text-sm">
+                    • Resets in {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {!isPaidUser && conversationsThisMonth >= 50 && (
+                  <p className="text-red-600 text-sm mt-1 font-medium">
+                    Your widget is paused. Upgrade to continue receiving conversations.
+                  </p>
+                )}
+                {!isPaidUser && conversationsThisMonth >= 40 && conversationsThisMonth < 50 && (
+                  <p className="text-yellow-700 text-sm mt-1">
+                    Approaching your limit. Consider upgrading.
+                  </p>
+                )}
+              </div>
+              {!isPaidUser && (
+                <button
+                  onClick={() => router.push("/dashboard/upgrade")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                    conversationsThisMonth >= 40
+                      ? 'bg-black text-white hover:bg-neutral-800'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  }`}
+                >
+                  Upgrade
+                </button>
+              )}
+            </div>
+            {/* Progress bar */}
+            <div className="mt-3 h-2 bg-neutral-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  !isPaidUser && conversationsThisMonth >= 50
+                    ? 'bg-red-500'
+                    : !isPaidUser && conversationsThisMonth >= 40
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
+                }`}
+                style={{ width: `${Math.min((conversationsThisMonth / (isPaidUser ? 500 : 50)) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Success Checklist - only show if user has widgets */}
         {!loading && widgets.length > 0 && (
           <div className="mb-6">

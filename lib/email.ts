@@ -57,7 +57,7 @@ export async function sendEmail(
  * Email template: 80% limit warning
  */
 function getLimitWarningEmail(data: EmailData): string {
-  const { conversationsUsed = 8, conversationsLeft = 2, userName = "there" } = data;
+  const { conversationsUsed = 40, conversationsLeft = 10, userName = "there" } = data;
 
   return `
     <!DOCTYPE html>
@@ -74,7 +74,7 @@ function getLimitWarningEmail(data: EmailData): string {
         <p style="font-size: 16px;">Hey ${userName},</p>
 
         <p style="font-size: 16px;">
-          Your Lil Widget has handled <strong>${conversationsUsed} out of 10 conversations</strong> this month!
+          Your Lil Widget has handled <strong>${conversationsUsed} out of 50 conversations</strong> this month!
         </p>
 
         <p style="font-size: 16px;">
@@ -86,7 +86,7 @@ function getLimitWarningEmail(data: EmailData): string {
             To keep the momentum going, consider upgrading to unlock:
           </p>
           <ul style="margin: 0; padding-left: 20px;">
-            <li style="margin-bottom: 8px;">✅ Unlimited conversations</li>
+            <li style="margin-bottom: 8px;">✅ 500 conversations/month</li>
             <li style="margin-bottom: 8px;">✅ Multiple widgets (perfect for different sites/pages)</li>
             <li style="margin-bottom: 8px;">✅ Expanded crawl (10+ pages for better answers)</li>
             <li style="margin-bottom: 8px;">✅ Analytics (see what visitors are asking)</li>
@@ -96,7 +96,7 @@ function getLimitWarningEmail(data: EmailData): string {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/upgrade"
              style="display: inline-block; background: #667eea; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-            Upgrade to Pro - $79/mo
+            Upgrade to Growth - $19/mo
           </a>
         </div>
 
@@ -126,7 +126,7 @@ function getLimitWarningEmail(data: EmailData): string {
  * Email template: 100% limit reached
  */
 function getLimitReachedEmail(data: EmailData): string {
-  const { conversationsUsed = 10, userName = "there" } = data;
+  const { conversationsUsed = 50, userName = "there" } = data;
 
   return `
     <!DOCTYPE html>
@@ -137,14 +137,14 @@ function getLimitReachedEmail(data: EmailData): string {
       </head>
       <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%); padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
-          <h1 style="color: white; margin: 0; font-size: 28px;">⚠️ Widget Limit Reached</h1>
+          <h1 style="color: white; margin: 0; font-size: 28px;">⚠️ Widget Paused</h1>
         </div>
 
         <p style="font-size: 16px;">Hey ${userName},</p>
 
         <p style="font-size: 16px;">
-          Your Lil Widget just hit <strong>${conversationsUsed} conversations</strong> this month.
-          That means ${conversationsUsed} visitors got instant answers instead of leaving your site.
+          Your Lil Widget just hit <strong>${conversationsUsed} conversations</strong> this month and is now paused.
+          That means ${conversationsUsed} visitors got instant answers instead of leaving your site!
         </p>
 
         <div style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 25px 0; border-radius: 4px;">
@@ -166,7 +166,7 @@ function getLimitReachedEmail(data: EmailData): string {
           Upgrade to Pro and unlock:
         </p>
         <ul style="margin: 0 0 25px 0; padding-left: 20px;">
-          <li style="margin-bottom: 8px;">✅ Unlimited conversations ($79/mo)</li>
+          <li style="margin-bottom: 8px;">✅ 500 conversations/month ($19/mo)</li>
           <li style="margin-bottom: 8px;">✅ Multiple widgets across your sites</li>
           <li style="margin-bottom: 8px;">✅ Expanded crawl for better product knowledge</li>
           <li style="margin-bottom: 8px;">✅ See what people are actually asking</li>
@@ -245,12 +245,12 @@ function getLimitRecoveryEmail(data: EmailData): string {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/upgrade"
              style="display: inline-block; background: #667eea; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
-            Upgrade to Pro - $79/mo
+            Upgrade to Growth - $19/mo
           </a>
         </div>
 
         <p style="font-size: 14px; color: #718096; font-style: italic;">
-          P.S. - Your widget helped 10 visitors. Imagine what unlimited could do.
+          P.S. - Your widget helped 50 visitors. Imagine what 500 could do.
         </p>
 
         <p style="font-size: 16px; margin-top: 30px;">

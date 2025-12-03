@@ -27,23 +27,31 @@ export async function GET(req: NextRequest) {
 
     const widgetIds = widgets?.map((w) => w.id) || [];
 
-    // Get conversations this month (exclude test conversations)
+    // Calculate billing period (rolling 30 days from signup)
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const userCreatedAt = user.created_at ? new Date(user.created_at) : now;
+    const daysSinceSignup = Math.floor((now.getTime() - userCreatedAt.getTime()) / (1000 * 60 * 60 * 24));
+    const completeCycles = Math.floor(daysSinceSignup / 30);
+    const billingPeriodStart = new Date(userCreatedAt.getTime() + (completeCycles * 30 * 24 * 60 * 60 * 1000));
+    const billingPeriodEnd = new Date(billingPeriodStart.getTime() + (30 * 24 * 60 * 60 * 1000));
+    const daysRemaining = Math.ceil((billingPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    const { count: conversationsThisMonth } = await supabase
+    const { count: conversationsThisPeriod } = await supabase
       .from("conversations")
       .select("id", { count: "exact", head: true })
       .in("widget_id", widgetIds)
-      .gte("created_at", startOfMonth.toISOString())
+      .gte("created_at", billingPeriodStart.toISOString())
       .eq("is_test", false);
 
     // Total widgets
     const totalWidgets = widgetIds.length;
 
     return NextResponse.json({
-      conversationsThisMonth: conversationsThisMonth || 0,
+      conversationsThisMonth: conversationsThisPeriod || 0, // Keep same key for backward compatibility
       totalWidgets,
+      billingPeriodStart: billingPeriodStart.toISOString(),
+      billingPeriodEnd: billingPeriodEnd.toISOString(),
+      daysRemaining,
     });
   } catch (err: any) {
     console.error("Usage stats error:", err);

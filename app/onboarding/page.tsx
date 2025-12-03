@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { ChatMessage } from "@/components/ChatMessage";
+import { trackWidgetCreated, trackWidgetInstall, trackOnboardingStep, trackEmailVerified } from "@/lib/analytics";
 
 const StripePaymentForm = dynamic(() => import("@/app/components/StripePaymentForm"), {
   ssr: false,
@@ -582,6 +583,8 @@ export default function OnboardingPage() {
 
       const data = await res.json();
       setWidgetId(data.widget.id);
+      // Track widget creation
+      trackWidgetCreated(data.widget.id);
       return data.widget.id;
     } catch (err: any) {
       setError(err.message || "Failed to create widget");
@@ -1211,6 +1214,10 @@ export default function OnboardingPage() {
                 try {
                   await navigator.clipboard.writeText(embedCode);
                   setEmbedCopied(true);
+                  // Track widget install
+                  if (widgetId) {
+                    trackWidgetInstall(widgetId);
+                  }
                   setTimeout(() => setEmbedCopied(false), 2000);
                 } catch (err) {
                   console.error("Failed to copy:", err);
