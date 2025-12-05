@@ -4,6 +4,14 @@ import "./globals.css";
 import SupabaseProvider from "./supabase-provider";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Rubik } from "next/font/google";
+
+const rubik = Rubik({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  variable: "--font-rubik",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -75,8 +83,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={rubik.variable}>
+      <body className={rubik.className}>
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-3CVCJFF04V"
           strategy="afterInteractive"
