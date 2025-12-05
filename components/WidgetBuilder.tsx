@@ -2,6 +2,84 @@
 
 import * as React from "react";
 
+// Simple markdown renderer for chat messages
+function renderMarkdown(text: string): React.ReactNode {
+  // Split by newlines first
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let listItems: string[] = [];
+  let listType: "ul" | "ol" | null = null;
+
+  const processInline = (line: string): React.ReactNode => {
+    // Handle bold **text**
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      return part;
+    });
+  };
+
+  const flushList = () => {
+    if (listItems.length > 0 && listType) {
+      const ListTag = listType;
+      elements.push(
+        <ListTag key={elements.length} className={listType === "ul" ? "list-disc ml-4 space-y-1" : "list-decimal ml-4 space-y-1"}>
+          {listItems.map((item, i) => (
+            <li key={i}>{processInline(item)}</li>
+          ))}
+        </ListTag>
+      );
+      listItems = [];
+      listType = null;
+    }
+  };
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+
+    // Check for unordered list (- item)
+    if (trimmed.startsWith("- ")) {
+      if (listType !== "ul") flushList();
+      listType = "ul";
+      listItems.push(trimmed.slice(2));
+      return;
+    }
+
+    // Check for ordered list (1. item, 2. item, etc.)
+    const orderedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (orderedMatch) {
+      if (listType !== "ol") flushList();
+      listType = "ol";
+      listItems.push(orderedMatch[1]);
+      return;
+    }
+
+    // Not a list item, flush any pending list
+    flushList();
+
+    // Empty line = paragraph break
+    if (!trimmed) {
+      elements.push(<br key={elements.length} />);
+      return;
+    }
+
+    // Regular text
+    elements.push(
+      <span key={elements.length}>
+        {processInline(trimmed)}
+        {idx < lines.length - 1 && <br />}
+      </span>
+    );
+  });
+
+  // Flush any remaining list
+  flushList();
+
+  return <>{elements}</>;
+}
+
 const PERSONALITY_TRAITS = [
   { id: "friendly", label: "Friendly", emoji: "😊", description: "Warm and approachable" },
   { id: "professional", label: "Professional", emoji: "💼", description: "Polished and formal" },
@@ -43,13 +121,17 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
   const [messages, setMessages] = React.useState<Array<{ role: string; content: string }>>([]);
   const [inputValue, setInputValue] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isStreaming, setIsStreaming] = React.useState(false);
   const [conversationId, setConversationId] = React.useState<string | null>(null);
   const [messageCount, setMessageCount] = React.useState(0);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const messagesContainerRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-scroll messages
+  // Auto-scroll messages within the chat container only
   React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // Magic building animation + API call to create real widget
@@ -147,10 +229,11 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     return greetings[personality] || `Hi! I'm ${name}. How can I help you today?`;
   };
 
-  // Send message - uses real chat API with the created widget
+  // Send message - uses real chat API with streaming
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading || !widgetId) return;
+    e.stopPropagation();
+    if (!inputValue.trim() || isLoading || isStreaming || !widgetId) return;
 
     const userMessage = inputValue.trim();
     setInputValue("");
@@ -164,25 +247,13 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
         body: JSON.stringify({
           message: userMessage,
           conversationId,
-          isTest: true, // Mark as test so it doesn't count against limits
+          isTest: true,
+          stream: true, // Request streaming response
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store conversation ID for follow-up messages
-        if (data.conversationId && !conversationId) {
-          setConversationId(data.conversationId);
-        }
-
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: data.reply },
-        ]);
-        setMessageCount((prev) => prev + 1);
-      } else {
-        // Handle rate limiting or other errors gracefully
+      if (!response.ok) {
+        const data = await response.json();
         const errorMsg = data.limitReached
           ? "Demo limit reached. Sign up to continue chatting!"
           : "Oops! Something went wrong. Please try again.";
@@ -190,7 +261,70 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
           ...prev,
           { role: "assistant", content: errorMsg },
         ]);
+        setIsLoading(false);
+        return;
       }
+
+      // Handle streaming response
+      setIsLoading(false);
+      setIsStreaming(true);
+
+      // Add empty assistant message that we'll update
+      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No reader available");
+      }
+
+      let fullContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6);
+            if (data === "[DONE]") {
+              continue;
+            }
+            try {
+              const parsed = JSON.parse(data);
+
+              // Store conversation ID
+              if (parsed.conversationId && !conversationId) {
+                setConversationId(parsed.conversationId);
+              }
+
+              // Append content
+              if (parsed.content) {
+                fullContent += parsed.content;
+                // Update the last message with accumulated content
+                setMessages((prev) => {
+                  const newMessages = [...prev];
+                  if (newMessages.length > 0) {
+                    newMessages[newMessages.length - 1] = {
+                      role: "assistant",
+                      content: fullContent,
+                    };
+                  }
+                  return newMessages;
+                });
+              }
+            } catch {
+              // Ignore parse errors for incomplete chunks
+            }
+          }
+        }
+      }
+
+      setMessageCount((prev) => prev + 1);
     } catch (err) {
       console.error("Chat error:", err);
       setMessages((prev) => [
@@ -199,6 +333,7 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
       ]);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -252,6 +387,7 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     setMessages([]);
     setConversationId(null);
     setMessageCount(0);
+    setIsStreaming(false);
   };
 
   return (
@@ -530,7 +666,7 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
                 </div>
 
                 {/* Messages */}
-                <div className="h-80 overflow-y-auto p-4 space-y-3 bg-neutral-50">
+                <div ref={messagesContainerRef} className="h-80 overflow-y-auto p-4 space-y-3 bg-neutral-50">
                   {messages.map((msg, idx) => (
                     <div
                       key={idx}
@@ -543,7 +679,7 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
                             : "bg-white border border-neutral-200 text-neutral-800"
                         }`}
                       >
-                        {msg.content}
+                        {msg.role === "assistant" ? renderMarkdown(msg.content) : msg.content}
                       </div>
                     </div>
                   ))}
@@ -562,7 +698,16 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
                 </div>
 
                 {/* Input */}
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-neutral-200 bg-white">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="p-4 border-t border-neutral-200 bg-white"
+                  onKeyDown={(e) => {
+                    // Prevent Enter from scrolling the page
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.stopPropagation();
+                    }
+                  }}
+                >
                   {messageCount >= 3 ? (
                     <div className="text-center">
                       <p className="text-sm text-neutral-500 mb-3">
@@ -582,13 +727,19 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
                         type="text"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          // Prevent page scroll on Enter
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.stopPropagation();
+                          }
+                        }}
                         placeholder="Type a message..."
                         className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10"
-                        disabled={isLoading}
+                        disabled={isLoading || isStreaming}
                       />
                       <button
                         type="submit"
-                        disabled={isLoading || !inputValue.trim()}
+                        disabled={isLoading || isStreaming || !inputValue.trim()}
                         className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
