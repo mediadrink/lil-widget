@@ -5,6 +5,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
 import HomepageDemoWidget from "@/components/HomepageDemoWidget";
+import WidgetBuilder from "@/components/WidgetBuilder";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -81,7 +82,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white text-neutral-900">
       {/* Hero Section with Gradient Background */}
-      <section className="relative min-h-[90vh] flex flex-col overflow-hidden">
+      <section className="relative h-[700px] flex flex-col overflow-hidden">
         {/* Gradient Background */}
         <div
           className="absolute inset-0 z-0"
@@ -128,31 +129,22 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero Content */}
-        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6 pb-20">
-          <h1 className="text-5xl md:text-7xl font-medium text-white mb-6 leading-[1.1] tracking-tight max-w-4xl">
-            AI chat widgets
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-6">
+          <h1 className="text-4xl md:text-6xl font-semibold text-white mb-6 leading-[1.15] tracking-tight max-w-4xl">
+            AI for Your Website
             <br />
-            for your website
+            in Under 5 Minutes
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-10 max-w-2xl leading-relaxed font-light">
-            Add an intelligent assistant to your site in minutes.
-            Answer questions 24/7 and capture more leads.
+          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl leading-relaxed">
+            Add a smart, fully customizable assistant that installs instantly,
+            answers customers 24/7, and helps you close more business.
           </p>
-          <button
-            onClick={() => setShowSignup(true)}
-            className="rounded-full bg-white hover:bg-neutral-100 text-neutral-900 font-medium px-8 py-4 text-base transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-          >
-            Get started
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </button>
         </div>
       </section>
 
-      {/* Demo Preview */}
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        <HomepageDemoWidget />
+      {/* Widget Builder */}
+      <section className="mx-auto max-w-5xl px-6 py-16 -mt-20 relative z-10">
+        <WidgetBuilder onComplete={() => setShowSignup(true)} />
       </section>
 
       {/* Features Section */}
