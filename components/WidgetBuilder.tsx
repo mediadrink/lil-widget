@@ -2,9 +2,6 @@
 
 import * as React from "react";
 
-// Demo widget ID - uses the hair salon one as base but we'll customize the personality
-const DEMO_WIDGET_ID = "23bf1fdc-3f60-41ed-b379-fa352cac4f68";
-
 const PERSONALITY_TRAITS = [
   { id: "friendly", label: "Friendly", emoji: "😊", description: "Warm and approachable" },
   { id: "professional", label: "Professional", emoji: "💼", description: "Polished and formal" },
@@ -37,6 +34,11 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
   const [magicMessageIndex, setMagicMessageIndex] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
 
+  // Real widget created via API
+  const [widgetId, setWidgetId] = React.useState<string | null>(null);
+  const [crawledMetadata, setCrawledMetadata] = React.useState<any>(null);
+  const [buildError, setBuildError] = React.useState<string | null>(null);
+
   // Demo chat state
   const [messages, setMessages] = React.useState<Array<{ role: string; content: string }>>([]);
   const [inputValue, setInputValue] = React.useState("");
@@ -50,10 +52,14 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Magic building animation
+  // Magic building animation + API call to create real widget
   React.useEffect(() => {
     if (step !== "building") return;
 
+    let isCancelled = false;
+    setBuildError(null);
+
+    // Cycle through magic messages
     const messageInterval = setInterval(() => {
       setMagicMessageIndex((prev) => {
         if (prev < MAGIC_MESSAGES.length - 1) return prev + 1;
@@ -61,23 +67,71 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
       });
     }, 1500);
 
+    // Progress animation (slower, synced with API call)
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          clearInterval(messageInterval);
-          setTimeout(() => setStep("complete"), 500);
-          return 100;
-        }
-        return prev + 2;
+        // Stop at 90% until API completes
+        if (prev >= 90) return 90;
+        return prev + 1.5;
       });
     }, 100);
 
+    // Actually create the widget via API
+    const createWidget = async () => {
+      try {
+        const response = await fetch("/api/demo-widget", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url,
+            name,
+            personality,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to create widget");
+        }
+
+        const data = await response.json();
+
+        if (isCancelled) return;
+
+        // Store the real widget ID
+        setWidgetId(data.widgetId);
+        setCrawledMetadata(data.metadata);
+
+        // Complete the progress
+        clearInterval(progressInterval);
+        setProgress(100);
+
+        // Transition to complete step
+        setTimeout(() => {
+          if (!isCancelled) setStep("complete");
+        }, 500);
+      } catch (err: any) {
+        console.error("Widget creation error:", err);
+        if (!isCancelled) {
+          setBuildError(err.message);
+          clearInterval(progressInterval);
+          clearInterval(messageInterval);
+          // Go back to URL step on error
+          setTimeout(() => {
+            if (!isCancelled) setStep("url");
+          }, 2000);
+        }
+      }
+    };
+
+    createWidget();
+
     return () => {
+      isCancelled = true;
       clearInterval(messageInterval);
       clearInterval(progressInterval);
     };
-  }, [step]);
+  }, [step, url, name, personality]);
 
   // Get greeting based on personality
   const getGreeting = () => {
@@ -93,10 +147,10 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     return greetings[personality] || `Hi! I'm ${name}. How can I help you today?`;
   };
 
-  // Send message to demo widget
+  // Send message - uses real chat API with the created widget
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isLoading || !widgetId) return;
 
     const userMessage = inputValue.trim();
     setInputValue("");
@@ -104,27 +158,44 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/widget/${DEMO_WIDGET_ID}/chat`, {
+      const response = await fetch(`/api/widget/${widgetId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: userMessage,
-          conversationId: conversationId,
-          visitorId: `demo-builder-${Date.now()}`,
+          conversationId,
+          isTest: true, // Mark as test so it doesn't count against limits
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
-
       const data = await response.json();
-      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
-      setConversationId(data.conversationId);
-      setMessageCount((prev) => prev + 1);
-    } catch (error) {
-      console.error("Chat error:", error);
+
+      if (response.ok) {
+        // Store conversation ID for follow-up messages
+        if (data.conversationId && !conversationId) {
+          setConversationId(data.conversationId);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.reply },
+        ]);
+        setMessageCount((prev) => prev + 1);
+      } else {
+        // Handle rate limiting or other errors gracefully
+        const errorMsg = data.limitReached
+          ? "Demo limit reached. Sign up to continue chatting!"
+          : "Oops! Something went wrong. Please try again.";
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: errorMsg },
+        ]);
+      }
+    } catch (err) {
+      console.error("Chat error:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again!" },
+        { role: "assistant", content: "Connection error. Please try again." },
       ]);
     } finally {
       setIsLoading(false);
@@ -175,6 +246,12 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
     setPersonality("");
     setProgress(0);
     setMagicMessageIndex(0);
+    setWidgetId(null);
+    setCrawledMetadata(null);
+    setBuildError(null);
+    setMessages([]);
+    setConversationId(null);
+    setMessageCount(0);
   };
 
   return (
@@ -324,18 +401,28 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
               Creating {name}...
             </h2>
             <p className="text-neutral-500 mb-8 text-lg min-h-[28px] transition-opacity duration-300">
-              {MAGIC_MESSAGES[magicMessageIndex]}
+              {buildError ? (
+                <span className="text-red-500">{buildError}</span>
+              ) : (
+                MAGIC_MESSAGES[magicMessageIndex]
+              )}
             </p>
 
             {/* Progress bar */}
             <div className="max-w-sm mx-auto">
               <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out"
+                  className={`h-full rounded-full transition-all duration-300 ease-out ${
+                    buildError
+                      ? "bg-red-500"
+                      : "bg-gradient-to-r from-purple-500 to-pink-500"
+                  }`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <p className="text-sm text-neutral-400 mt-2">{progress}%</p>
+              <p className="text-sm text-neutral-400 mt-2">
+                {buildError ? "Error - returning to start..." : `${Math.round(progress)}%`}
+              </p>
             </div>
           </div>
         )}
@@ -350,9 +437,27 @@ export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
               {name} is ready!
             </h2>
             <p className="text-neutral-500 mb-8 text-lg">
-              Your {PERSONALITY_TRAITS.find(t => t.id === personality)?.label.toLowerCase()} assistant is built.
-              Sign up to customize further, train it with your data, and install it on your site.
+              Your {PERSONALITY_TRAITS.find(t => t.id === personality)?.label.toLowerCase()} assistant is built
+              {crawledMetadata?.crawled ? " and trained on your website" : ""}.
+              Sign up to customize further and install it on your site.
             </p>
+
+            {/* Show what was learned */}
+            {crawledMetadata?.title && (
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 mb-6 text-left border border-purple-100">
+                <h3 className="font-semibold text-neutral-800 mb-3 flex items-center gap-2">
+                  <span className="text-lg">📚</span> What {name} learned
+                </h3>
+                <div className="space-y-2 text-sm text-neutral-600">
+                  {crawledMetadata.title && (
+                    <p><span className="font-medium">Business:</span> {crawledMetadata.title}</p>
+                  )}
+                  {crawledMetadata.description && (
+                    <p><span className="font-medium">About:</span> {crawledMetadata.description.substring(0, 150)}...</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="bg-neutral-50 rounded-2xl p-6 mb-8">
               <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-600">
