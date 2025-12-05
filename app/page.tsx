@@ -144,7 +144,7 @@ export default function LandingPage() {
 
       {/* Widget Builder */}
       <section className="mx-auto max-w-5xl px-6 py-16 -mt-20 relative z-10">
-        <WidgetBuilder onComplete={() => setShowSignup(true)} />
+        <WidgetBuilder onSignup={() => setShowSignup(true)} />
       </section>
 
       {/* Features Section */}

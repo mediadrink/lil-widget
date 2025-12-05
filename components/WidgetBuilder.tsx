@@ -2,6 +2,9 @@
 
 import * as React from "react";
 
+// Demo widget ID - uses the hair salon one as base but we'll customize the personality
+const DEMO_WIDGET_ID = "23bf1fdc-3f60-41ed-b379-fa352cac4f68";
+
 const PERSONALITY_TRAITS = [
   { id: "friendly", label: "Friendly", emoji: "😊", description: "Warm and approachable" },
   { id: "professional", label: "Professional", emoji: "💼", description: "Polished and formal" },
@@ -20,19 +23,32 @@ const MAGIC_MESSAGES = [
   "Almost there...",
 ];
 
-type BuilderStep = "url" | "name" | "personality" | "building" | "complete";
+type BuilderStep = "url" | "name" | "personality" | "building" | "complete" | "demo";
 
 interface WidgetBuilderProps {
-  onComplete?: (data: { url: string; name: string; personality: string }) => void;
+  onSignup?: () => void;
 }
 
-export default function WidgetBuilder({ onComplete }: WidgetBuilderProps) {
+export default function WidgetBuilder({ onSignup }: WidgetBuilderProps) {
   const [step, setStep] = React.useState<BuilderStep>("url");
   const [url, setUrl] = React.useState("");
   const [name, setName] = React.useState("");
   const [personality, setPersonality] = React.useState("");
   const [magicMessageIndex, setMagicMessageIndex] = React.useState(0);
   const [progress, setProgress] = React.useState(0);
+
+  // Demo chat state
+  const [messages, setMessages] = React.useState<Array<{ role: string; content: string }>>([]);
+  const [inputValue, setInputValue] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [conversationId, setConversationId] = React.useState<string | null>(null);
+  const [messageCount, setMessageCount] = React.useState(0);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll messages
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Magic building animation
   React.useEffect(() => {
@@ -62,6 +78,58 @@ export default function WidgetBuilder({ onComplete }: WidgetBuilderProps) {
       clearInterval(progressInterval);
     };
   }, [step]);
+
+  // Get greeting based on personality
+  const getGreeting = () => {
+    const trait = PERSONALITY_TRAITS.find((t) => t.id === personality);
+    const greetings: Record<string, string> = {
+      friendly: `Hi there! 😊 I'm ${name}, your friendly assistant. How can I help you today?`,
+      professional: `Welcome. I'm ${name}, here to assist you. How may I help?`,
+      witty: `Well hello! ${name} at your service. What brings you to my corner of the internet? 😄`,
+      helpful: `Hello! I'm ${name}, and I'm here to help you with anything you need. What can I do for you?`,
+      concise: `Hi! ${name} here. How can I help?`,
+      enthusiastic: `Hey there! 🎉 I'm ${name} and I'm SO excited to help you today! What's on your mind?`,
+    };
+    return greetings[personality] || `Hi! I'm ${name}. How can I help you today?`;
+  };
+
+  // Send message to demo widget
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage = inputValue.trim();
+    setInputValue("");
+    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`/api/widget/${DEMO_WIDGET_ID}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: userMessage,
+          conversationId: conversationId,
+          visitorId: `demo-builder-${Date.now()}`,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to get response");
+
+      const data = await response.json();
+      setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      setConversationId(data.conversationId);
+      setMessageCount((prev) => prev + 1);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "Sorry, I'm having trouble responding right now. Please try again!" },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +161,11 @@ export default function WidgetBuilder({ onComplete }: WidgetBuilderProps) {
   };
 
   const handleTryDemo = () => {
-    onComplete?.({ url, name, personality });
+    // Initialize demo with greeting
+    setMessages([{ role: "assistant", content: getGreeting() }]);
+    setMessageCount(0);
+    setConversationId(null);
+    setStep("demo");
   };
 
   const handleStartOver = () => {
@@ -283,7 +355,7 @@ export default function WidgetBuilder({ onComplete }: WidgetBuilderProps) {
             </p>
 
             <div className="bg-neutral-50 rounded-2xl p-6 mb-8">
-              <div className="flex items-center justify-center gap-4 text-sm text-neutral-600">
+              <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-neutral-600">
                 <div className="flex items-center gap-2">
                   <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -322,6 +394,158 @@ export default function WidgetBuilder({ onComplete }: WidgetBuilderProps) {
               >
                 Start over
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Live Demo */}
+        {step === "demo" && (
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl md:text-3xl font-semibold mb-2 tracking-tight">
+                Chat with {name}
+              </h2>
+              <p className="text-neutral-500">
+                Try out your {PERSONALITY_TRAITS.find(t => t.id === personality)?.label.toLowerCase()} assistant!
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Chat Widget */}
+              <div className="bg-white rounded-2xl border border-neutral-200 shadow-lg overflow-hidden">
+                {/* Widget Header */}
+                <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">
+                    {PERSONALITY_TRAITS.find(t => t.id === personality)?.emoji}
+                  </div>
+                  <div className="text-white">
+                    <div className="font-semibold">{name}</div>
+                    <div className="text-xs text-white/80">Online now</div>
+                  </div>
+                </div>
+
+                {/* Messages */}
+                <div className="h-80 overflow-y-auto p-4 space-y-3 bg-neutral-50">
+                  {messages.map((msg, idx) => (
+                    <div
+                      key={idx}
+                      className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
+                          msg.role === "user"
+                            ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                            : "bg-white border border-neutral-200 text-neutral-800"
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-white border border-neutral-200 rounded-2xl px-4 py-2 text-sm">
+                        <div className="flex gap-1">
+                          <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                          <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                          <span className="w-2 h-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input */}
+                <form onSubmit={handleSendMessage} className="p-4 border-t border-neutral-200 bg-white">
+                  {messageCount >= 3 ? (
+                    <div className="text-center">
+                      <p className="text-sm text-neutral-500 mb-3">
+                        You've used your 3 demo messages!
+                      </p>
+                      <button
+                        type="button"
+                        onClick={onSignup}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-medium px-6 py-2 rounded-full text-sm hover:opacity-90 transition-opacity"
+                      >
+                        Sign up to keep chatting
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Type a message..."
+                        className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isLoading || !inputValue.trim()}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                  {messageCount > 0 && messageCount < 3 && (
+                    <p className="text-xs text-neutral-400 text-center mt-2">
+                      {3 - messageCount} messages left in demo
+                    </p>
+                  )}
+                </form>
+              </div>
+
+              {/* Sign Up CTA */}
+              <div className="flex flex-col justify-center">
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 border border-purple-100">
+                  <h3 className="text-xl font-semibold mb-4">
+                    Love it? Make it yours!
+                  </h3>
+                  <ul className="space-y-3 mb-6">
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-neutral-700">Train it on your actual website content</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-neutral-700">Customize colors, logo, and messaging</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-neutral-700">Install with one line of code</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <svg className="w-5 h-5 text-purple-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-neutral-700">View conversations and improve over time</span>
+                    </li>
+                  </ul>
+                  <button
+                    onClick={onSignup}
+                    className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium px-6 py-4 rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    Sign up free — no credit card required
+                  </button>
+                  <button
+                    onClick={handleStartOver}
+                    className="w-full text-neutral-500 hover:text-neutral-700 font-medium mt-3 transition-colors text-sm"
+                  >
+                    ← Build another widget
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
