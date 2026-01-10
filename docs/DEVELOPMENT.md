@@ -1,13 +1,12 @@
-# Lil Widget - Developer Guide
+# Development Guide
 
-> **The one doc you need to understand the entire project and resume development.**
+> Complete guide to understanding and developing Lil Widget.
 
-**Last Updated:** 2025-11-12
-**Status:** 🚀 Production
+**Last Updated:** 2026-01-10
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 **What it is:** AI-powered embeddable chat widget that learns from websites and gets smarter over time.
 
@@ -16,20 +15,20 @@
 **Core Value Prop:**
 - 5-minute setup (guided onboarding wizard)
 - Self-improving AI based on conversations
-- Affordable for SMBs ($9-49/mo planned)
+- Affordable for SMBs ($19/mo)
 
 **Differentiator:** Only widget that auto-learns from conversations and has conversational admin interface.
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Frontend
 - **Framework:** Next.js 15 (App Router)
 - **React:** 19
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
-- **Design System:** Panic-inspired (see PANIC_DESIGN_SYSTEM.md)
+- **Design System:** Panic-inspired (see [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md))
 
 ### Backend
 - **API:** Next.js API Routes (serverless)
@@ -38,12 +37,12 @@
 - **Storage:** Supabase Storage (widget logos)
 
 ### AI
-- **Chat:** OpenAI GPT-4 (gpt-4)
+- **Chat:** OpenAI GPT-4
 - **Admin Assistant:** Anthropic Claude (optional)
 - **Crawling:** Cheerio for web scraping
 
-### Payments (Disabled)
-- **Stripe:** Ready but currently disabled
+### Payments
+- **Stripe:** Subscriptions ($19/month Growth plan)
 
 ### Deployment
 - **Host:** Vercel
@@ -52,27 +51,27 @@
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ### How the Widget Works
 
 ```
 1. User embeds script tag on their website
-   ↓
+   |
 2. widget.js loads and creates Shadow DOM chat interface
-   ↓
+   |
 3. Visitor types message
-   ↓
+   |
 4. Widget calls /api/widget/[id]/chat with message
-   ↓
+   |
 5. API loads widget persona + rules + conversation history
-   ↓
+   |
 6. API calls OpenAI GPT-4 with full context
-   ↓
+   |
 7. Response saved to database
-   ↓
+   |
 8. Reply sent back to widget
-   ↓
+   |
 9. Widget displays response
 ```
 
@@ -102,14 +101,14 @@
 
 ---
 
-## 📊 Database Schema
+## Database Schema
 
 ### Core Tables
 
 ```sql
 widgets
 ├── id (uuid, pk)
-├── owner_id (uuid, fk → auth.users)
+├── owner_id (uuid, fk -> auth.users)
 ├── title (text)
 ├── url (text)
 ├── persona_text (text)
@@ -122,14 +121,14 @@ widgets
 
 widget_rules
 ├── id (uuid, pk)
-├── widget_id (uuid, fk → widgets)
+├── widget_id (uuid, fk -> widgets)
 ├── text (text)
 ├── version (text, nullable)
 └── created_at (timestamptz)
 
 conversations
 ├── id (uuid, pk)
-├── widget_id (uuid, fk → widgets)
+├── widget_id (uuid, fk -> widgets)
 ├── visitor_id (text, nullable)
 ├── status (text, default: 'active')
 ├── started_at (timestamptz)
@@ -137,15 +136,15 @@ conversations
 
 messages
 ├── id (uuid, pk)
-├── conversation_id (uuid, fk → conversations)
-├── widget_id (uuid, fk → widgets)
+├── conversation_id (uuid, fk -> conversations)
+├── widget_id (uuid, fk -> widgets)
 ├── role (text: 'user' | 'assistant')
 ├── content (text)
 └── created_at (timestamptz)
 
 widget_knowledge_base (for deep crawl)
 ├── id (uuid, pk)
-├── widget_id (uuid, fk → widgets, unique)
+├── widget_id (uuid, fk -> widgets, unique)
 ├── data (jsonb) - structured crawl results
 ├── last_crawled_at (timestamptz)
 ├── created_at (timestamptz)
@@ -162,9 +161,7 @@ widget-logos/
 
 ---
 
-## 📁 File Structure
-
-### Key Directories
+## File Structure
 
 ```
 lil-widget/
@@ -187,21 +184,20 @@ lil-widget/
 │   ├── register/                     # Sign up
 │   └── login/                        # Sign in
 ├── components/
+│   ├── ChatMessage.tsx               # Unified chat message component
 │   └── LilHelperButton.tsx           # Floating AI assistant
 ├── lib/
 │   └── supabase/                     # Supabase clients
+├── utils/
+│   └── markdown.ts                   # Unified markdown parser
 ├── public/
 │   └── widget.js                     # Embeddable widget script
-└── docs/
-    ├── DEV_GUIDE.md                  # This file
-    ├── WORKING_CHECKLIST.md          # Active tasks
-    ├── PANIC_DESIGN_SYSTEM.md        # Design reference
-    └── CRAWL_TIERS.md                # Crawling system docs
+└── docs/                             # Documentation
 ```
 
 ---
 
-## 🔌 Key API Endpoints
+## API Endpoints
 
 ### Public (No Auth Required)
 
@@ -280,7 +276,7 @@ DELETE /api/widget/[id]/rules/[ruleId]
 
 ---
 
-## 🚀 Development Setup
+## Development Setup
 
 ### Prerequisites
 - Node.js 18+
@@ -291,7 +287,7 @@ DELETE /api/widget/[id]/rules/[ruleId]
 ### Initial Setup
 
 ```bash
-# Clone repo (if needed)
+# Clone repo
 git clone <repo-url>
 cd lil-widget
 
@@ -300,7 +296,8 @@ npm install
 
 # Create .env.local
 cp .env.example .env.local
-# Then edit .env.local with your keys:
+
+# Edit .env.local with your keys:
 # - OPENAI_API_KEY
 # - NEXT_PUBLIC_SUPABASE_URL
 # - NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -312,16 +309,30 @@ npm run dev
 # Opens at http://localhost:3000
 ```
 
-### Database Setup
+### Environment Variables
 
-1. Create Supabase project
-2. Run SQL from DEPLOYMENT_GUIDE.md (section 2.B)
-3. Enable RLS policies (section 2.C)
-4. Create `widget-logos` storage bucket (section 2.E)
+```bash
+# OpenAI
+OPENAI_API_KEY=sk-...
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbG...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbG...
+
+# Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
+
+# App
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_EMBED_ORIGIN=http://localhost:3000
+```
 
 ---
 
-## 💻 Common Development Tasks
+## Common Development Tasks
 
 ### Testing the Widget Locally
 
@@ -348,14 +359,10 @@ npm run dev
 
 1. Update `widgets` table:
 ```sql
-ALTER TABLE widgets
-ADD COLUMN new_field text DEFAULT 'value';
+ALTER TABLE widgets ADD COLUMN new_field text DEFAULT 'value';
 ```
-
 2. Update TypeScript type in API route
-
 3. Add UI in admin console
-
 4. Update `widget.js` to use new field
 
 ### Adding a New API Endpoint
@@ -371,7 +378,6 @@ export async function POST(req: NextRequest) {
   return Response.json({ success: true });
 }
 ```
-
 2. Add TypeScript types
 3. Call from frontend
 4. Test with curl or Postman
@@ -385,13 +391,11 @@ git commit -m "Description"
 
 # Push to main (auto-deploys on Vercel)
 git push origin main
-
-# Check Vercel dashboard for deployment status
 ```
 
 ---
 
-## 🎨 Design Patterns
+## Design Patterns
 
 ### View/Edit Mode Pattern
 
@@ -404,7 +408,7 @@ const [isEditing, setIsEditing] = useState(false);
 {!isEditing ? (
   <div>
     <h2>{title}</h2>
-    <button onClick={() => setIsEditing(true)}>✏️ Edit</button>
+    <button onClick={() => setIsEditing(true)}>Edit</button>
   </div>
 ) : (
   // Edit Mode
@@ -414,22 +418,6 @@ const [isEditing, setIsEditing] = useState(false);
     <button onClick={() => setIsEditing(false)}>Cancel</button>
   </div>
 )}
-```
-
-### Toast Notifications
-
-```typescript
-// Create toast container in layout
-<div id="toast-container" />
-
-// Show toast
-const showToast = (message: string, type: 'success' | 'error') => {
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.textContent = message;
-  document.getElementById('toast-container')?.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-};
 ```
 
 ### Supabase Client Pattern
@@ -446,7 +434,27 @@ const supabase = createClient();
 
 ---
 
-## 🐛 Troubleshooting
+## Code Conventions
+
+### Naming
+- Components: `PascalCase.tsx`
+- API routes: `route.ts` in folder
+- Utilities: `camelCase.ts`
+- Database: `snake_case`
+
+### TypeScript
+- Always use types (no `any`)
+- Define API response types
+- Use strict mode
+
+### Tailwind
+- Follow Panic design system
+- Use design tokens (colors, spacing)
+- Mobile-first responsive design
+
+---
+
+## Troubleshooting
 
 ### Widget Not Loading
 - Check CORS settings in API routes
@@ -464,7 +472,6 @@ const supabase = createClient();
 - Verify API key is valid
 - Check rate limits
 - Ensure proper error handling in chat endpoint
-- Look at API usage dashboard
 
 ### Build Errors
 - Clear `.next` folder: `rm -rf .next`
@@ -473,32 +480,7 @@ const supabase = createClient();
 
 ---
 
-## 📝 Code Conventions
-
-### Naming
-- Components: `PascalCase.tsx`
-- API routes: `route.ts` in folder
-- Utilities: `camelCase.ts`
-- Database: `snake_case`
-
-### TypeScript
-- Always use types (no `any`)
-- Define API response types
-- Use strict mode
-
-### Tailwind
-- Follow Panic design system (PANIC_DESIGN_SYSTEM.md)
-- Use design tokens (colors, spacing)
-- Mobile-first responsive design
-
-### Comments
-- JSDoc for functions
-- Explain "why" not "what"
-- TODO comments for future work
-
----
-
-## 🔐 Security Notes
+## Security Notes
 
 ### RLS Policies
 - All tables have RLS enabled
@@ -510,46 +492,24 @@ const supabase = createClient();
 - All keys in environment variables
 - Never commit .env.local
 - Use separate keys for dev/prod
-- Rotate keys if compromised
 
 ### Input Validation
 - Always sanitize user input
 - Validate URLs before crawling
 - Check file types/sizes for uploads
-- Rate limit where appropriate
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
-**Project Docs:**
-- `WORKING_CHECKLIST.md` - Current tasks
-- `PANIC_DESIGN_SYSTEM.md` - Design reference
-- `CRAWL_TIERS.md` - Crawling system
-- `DEPLOYMENT_GUIDE.md` - Production deployment
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment
+- [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) - Design reference
+- [FEATURES.md](./FEATURES.md) - Feature documentation
+- [TESTING.md](./TESTING.md) - Testing guide
+- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues
 
 **External Docs:**
 - [Next.js 15 Docs](https://nextjs.org/docs)
 - [Supabase Docs](https://supabase.com/docs)
 - [OpenAI API Docs](https://platform.openai.com/docs)
 - [Tailwind CSS](https://tailwindcss.com/docs)
-
----
-
-## 🆘 Getting Help
-
-**Check First:**
-1. This DEV_GUIDE.md
-2. Error logs (Vercel/Supabase dashboard)
-3. Browser console
-4. Git history for related changes
-
-**Still Stuck?**
-- Review recent changes in git log
-- Check if issue exists in production
-- Search Supabase/Next.js docs
-- Ask Claude Code for help 😊
-
----
-
-**Remember:** Read this doc at the start of each session to get oriented!

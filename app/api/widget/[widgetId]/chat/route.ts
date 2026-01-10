@@ -430,7 +430,7 @@ export async function POST(
         async start(controller) {
           try {
             const streamResponse = await openai.chat.completions.create({
-              model: "gpt-4",
+              model: "gpt-4o",
               messages,
               temperature: 0.7,
               max_tokens: 500,
@@ -506,7 +506,7 @@ export async function POST(
     // Non-streaming fallback (original behavior)
     try {
       const chatResponse = await openai.chat.completions.create({
-        model: "gpt-4",
+        model: "gpt-4o",
         messages,
         temperature: 0.7,
         max_tokens: 500,

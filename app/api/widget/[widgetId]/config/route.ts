@@ -1,6 +1,6 @@
 // app/api/widget/[widgetId]/config/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/utils/supabase/serverAdmin";
 import { resolveWidgetStyle, type WidgetCustomization } from "@/lib/widgetStyles";
 
 /**
@@ -12,7 +12,6 @@ export async function GET(
   req: NextRequest,
   context: { params: Promise<{ widgetId: string }> }
 ) {
-  const supabase = await supabaseServer();
   const { widgetId } = await context.params;
 
   if (!widgetId) {
@@ -24,7 +23,7 @@ export async function GET(
 
   try {
     // Fetch widget configuration (no auth check - public data)
-    const { data: widget, error } = await supabase
+    const { data: widget, error } = await supabaseAdmin
       .from("widgets")
       .select("id, style, position, customization, logo_url, auto_open_delay, owner_id")
       .eq("id", widgetId)
@@ -42,7 +41,7 @@ export async function GET(
     // Get owner's subscription tier
     let subscriptionTier = "free";
     try {
-      const { data: { user: owner } } = await supabase.auth.admin.getUserById(widget.owner_id);
+      const { data: { user: owner } } = await supabaseAdmin.auth.admin.getUserById(widget.owner_id);
       subscriptionTier = owner?.user_metadata?.subscription_tier || "free";
     } catch (err) {
       // Default to free if we can't get tier
