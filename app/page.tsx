@@ -700,9 +700,9 @@ export default function LandingPage() {
 
       {/* Lil Widget - Dogfooding our own product on homepage! */}
       <Script
-        src="https://www.lilwidget.com/widget.js"
+        src={`/widget.js?v=${Date.now()}`}
         data-id="6a811b29-68e7-423c-9163-e7ef316af1b1"
-        data-base-url="https://www.lilwidget.com"
+        data-base-url=""
         strategy="lazyOnload"
       />
     </div>

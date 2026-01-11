@@ -17,6 +17,7 @@ type WidgetCustomization = {
   borderRadius: string;
   fontFamily: string;
   headerText: string;
+  headerIcon?: string;
   buttonHoverColor: string;
   inputBorderColor: string;
   inputFocusColor: string;
@@ -148,6 +149,32 @@ export default function AdminConsolePage(
     () => resolveWidgetStyle(widget.style, widget.customization),
     [widget.style, widget.customization]
   );
+
+  // Load Google Font for preview when customization changes
+  React.useEffect(() => {
+    const fontFamily = currentCustomization.fontFamily;
+    if (!fontFamily) return;
+
+    // Extract first font name
+    const fontMatch = fontFamily.match(/^['"]?([^'",]+)/);
+    if (!fontMatch) return;
+
+    const fontName = fontMatch[1].trim();
+
+    // Skip system fonts
+    const systemFonts = ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif', 'serif', 'monospace'];
+    if (systemFonts.some(sf => fontName.toLowerCase() === sf.toLowerCase())) return;
+
+    // Check if already loaded
+    const existingLink = document.querySelector(`link[href*="${fontName.replace(/\s+/g, '+')}"]`);
+    if (existingLink) return;
+
+    // Load from Google Fonts
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
+    document.head.appendChild(link);
+  }, [currentCustomization.fontFamily]);
 
   const [rules, setRules] = React.useState<Rule[]>([]);
   const [newRule, setNewRule] = React.useState("");
@@ -1253,17 +1280,42 @@ export default function AdminConsolePage(
                 )}
               </div>
 
-              {/* Widget Preview */}
+              {/* Widget Preview - wrapped in gradient for glass effect visibility */}
               <div
-                className="border p-5 shadow-lg max-w-[350px]"
+                className="p-4 rounded-xl"
                 style={{
-                  background: currentCustomization.widgetBg,
-                  borderRadius: currentCustomization.borderRadius,
-                  fontFamily: currentCustomization.fontFamily,
+                  background: widget.style === "preset-glass"
+                    ? "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)"
+                    : widget.style === "preset-midnight"
+                    ? "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)"
+                    : "transparent",
                 }}
               >
-                <h4 className="text-lg font-semibold text-neutral-900 mb-4 flex items-center gap-2">
-                  {widget.logo_url && (
+                <div
+                  className={cx(
+                    "border p-5 shadow-lg max-w-[350px]",
+                    widget.style === "preset-glass" && "backdrop-blur-xl backdrop-saturate-150"
+                  )}
+                  style={{
+                    background: currentCustomization.widgetBg,
+                    borderRadius: currentCustomization.borderRadius,
+                    fontFamily: currentCustomization.fontFamily,
+                    borderColor: widget.style === "preset-glass"
+                      ? "rgba(255, 255, 255, 0.35)"
+                      : widget.style === "preset-midnight"
+                      ? "#3f3f46"
+                      : undefined,
+                    WebkitBackdropFilter: widget.style === "preset-glass" ? "blur(24px) saturate(180%)" : undefined,
+                    backdropFilter: widget.style === "preset-glass" ? "blur(24px) saturate(180%)" : undefined,
+                  }}
+                >
+                <h4
+                  className="text-lg font-semibold mb-4 flex items-center gap-2"
+                  style={{
+                    color: widget.style === "preset-midnight" ? "#f4f4f5" : "#171717",
+                  }}
+                >
+                  {widget.logo_url ? (
                     <img
                       src={widget.logo_url}
                       alt="Logo"
@@ -1272,14 +1324,30 @@ export default function AdminConsolePage(
                         e.currentTarget.style.display = "none";
                       }}
                     />
-                  )}
+                  ) : currentCustomization.headerIcon ? (
+                    <span className="text-xl">{currentCustomization.headerIcon}</span>
+                  ) : null}
                   <span>{currentCustomization.headerText}</span>
                 </h4>
 
                 {/* Messages */}
-                <div className="max-h-[300px] overflow-y-auto mb-4 p-2 bg-neutral-50 rounded-lg">
+                <div
+                  className="max-h-[300px] overflow-y-auto mb-4 p-2 rounded-lg"
+                  style={{
+                    background: widget.style === "preset-midnight"
+                      ? "rgba(39, 39, 42, 0.5)"
+                      : widget.style === "preset-glass"
+                      ? "rgba(255, 255, 255, 0.35)"
+                      : "#fafafa",
+                  }}
+                >
                   {previewConversation.length === 0 ? (
-                    <p className="text-xs text-neutral-400 text-center py-8 italic">
+                    <p
+                      className="text-xs text-center py-8 italic"
+                      style={{
+                        color: widget.style === "preset-midnight" ? "#71717a" : "#a3a3a3",
+                      }}
+                    >
                       Start a conversation to test your widget
                     </p>
                   ) : (
@@ -1371,6 +1439,7 @@ export default function AdminConsolePage(
                   </button>
                 </div>
               </div>
+              </div>
             </section>
 
             {/* Embed Code */}
@@ -1417,6 +1486,7 @@ export default function AdminConsolePage(
                     }));
                     // Save immediately
                     await saveWidget({ style: preset.id, customization: null });
+                    showSuccessToast(`✅ Style "${preset.name}" applied!`);
                   }}
                   className={cx(
                     "p-3 rounded-lg border-2 text-left transition-all",

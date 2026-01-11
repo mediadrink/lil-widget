@@ -90,31 +90,37 @@
 
     .widget-chat-bubble {
       position: fixed;
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
-      background: var(--primary-color);
+      background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 80%, black) 100%);
       color: white;
-      font-size: 1.5rem;
+      font-size: 1.625rem;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       z-index: 9998;
+      border: none;
     }
+
     .widget-chat-bubble:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.25), 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .widget-chat-bubble:active {
+      transform: scale(1.02);
     }
 
     @media (max-width: 480px) {
       .widget-chat-bubble {
-        width: 56px;
-        height: 56px;
-        bottom: 16px;
-        right: 16px;
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
       }
     }
   `;
@@ -227,155 +233,258 @@
         --primary-color: #007aff;
         --user-msg-color: #007aff;
         --assistant-msg-color: #ffffff;
-        --assistant-msg-border: #e0e0e0;
+        --assistant-msg-border: #e5e7eb;
         --widget-bg: #ffffff;
-        --border-radius: 12px;
-        --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        --button-hover-color: #0056b3;
-        --input-border-color: #d0d0d0;
+        --border-radius: 16px;
+        --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --button-hover-color: #0066cc;
+        --input-border-color: #d1d5db;
         --input-focus-color: #007aff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --bg-subtle: #f9fafb;
       }
 
       .widget-container {
         font-family: var(--font-family);
         background: var(--widget-bg);
-        border: 1px solid #e0e0e0;
+        border: 1px solid #e5e7eb;
         border-radius: var(--border-radius);
-        padding: 1.25rem;
-        width: 350px;
+        width: 380px;
         max-width: calc(100vw - 40px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
         position: fixed;
-        bottom: 20px;
-        right: 20px;
+        bottom: 24px;
+        right: 24px;
+        overflow: hidden;
       }
+
       .widget-header {
-        margin: 0 0 1rem 0;
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #1a1a1a;
+        margin: 0;
+        padding: 1rem 1.25rem;
+        background: var(--widget-bg);
+        border-bottom: 1px solid #e5e7eb;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
       }
+
+      .widget-header-icon {
+        font-size: 1.75rem;
+        line-height: 1;
+      }
+
+      .widget-header-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .widget-header-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .widget-header-subtitle {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
       .widget-logo {
-        height: 24px;
-        width: auto;
-        max-width: 32px;
+        height: 32px;
+        width: 32px;
+        border-radius: 8px;
         object-fit: contain;
       }
+
       .widget-header-content {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
         flex: 1;
+        min-width: 0;
       }
+
       .widget-minimize-btn {
         background: none;
         border: none;
-        font-size: 1.25rem;
+        font-size: 1.5rem;
         cursor: pointer;
-        padding: 0.25rem;
-        border-radius: 4px;
+        padding: 0.375rem;
+        border-radius: 8px;
         transition: background 0.2s;
-        color: #666;
+        color: var(--text-secondary);
         line-height: 1;
+        flex-shrink: 0;
       }
+
       .widget-minimize-btn:hover {
-        background: rgba(0,0,0,0.05);
+        background: var(--bg-subtle);
+        color: var(--text-primary);
       }
+
+      .widget-body {
+        padding: 1rem 1.25rem 1.25rem;
+      }
+
       .widget-messages {
-        max-height: 300px;
+        max-height: 320px;
         overflow-y: auto;
         margin-bottom: 1rem;
-        padding: 0.5rem;
-        background: #f9f9f9;
-        border-radius: calc(var(--border-radius) * 0.66);
+        padding: 0.75rem;
+        background: var(--bg-subtle);
+        border-radius: 12px;
         -webkit-overflow-scrolling: touch;
       }
+
       .message {
         margin-bottom: 0.75rem;
-        padding: 0.625rem;
-        border-radius: calc(var(--border-radius) * 0.66);
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
         font-size: 0.875rem;
-        line-height: 1.4;
+        line-height: 1.5;
         word-wrap: break-word;
+        animation: fadeIn 0.2s ease-out;
       }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .message:last-child {
+        margin-bottom: 0;
+      }
+
       .message.user {
         background: var(--user-msg-color);
         color: white;
-        margin-left: 2rem;
-        text-align: right;
+        margin-left: 2.5rem;
+        border-bottom-right-radius: 4px;
       }
+
       .message.assistant {
         background: var(--assistant-msg-color);
         border: 1px solid var(--assistant-msg-border);
-        margin-right: 2rem;
+        color: var(--text-primary);
+        margin-right: 2.5rem;
+        border-bottom-left-radius: 4px;
       }
+
       .message.error {
-        background: #fee;
-        border: 1px solid #fcc;
-        color: #c33;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
       }
+
       .widget-input-area {
         display: flex;
-        gap: 0.5rem;
+        gap: 0.625rem;
       }
+
       .widget-branding {
         text-align: center;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid #e0e0e0;
+        padding: 0.75rem 1.25rem;
+        border-top: 1px solid #e5e7eb;
+        background: var(--bg-subtle);
       }
+
       .widget-branding a {
-        color: #666;
-        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-size: 0.6875rem;
         text-decoration: none;
         transition: color 0.2s;
       }
+
       .widget-branding a:hover {
-        color: #333;
+        color: var(--text-primary);
       }
+
       .widget-input {
         flex: 1;
-        padding: 0.75rem;
+        padding: 0.75rem 1rem;
         border: 1px solid var(--input-border-color);
-        border-radius: calc(var(--border-radius) * 0.66);
-        font-size: 16px;
+        border-radius: 10px;
+        font-size: 0.9375rem;
         resize: none;
         font-family: inherit;
         -webkit-appearance: none;
         touch-action: manipulation;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        color: var(--text-primary);
       }
+
+      .widget-input::placeholder {
+        color: var(--text-secondary);
+      }
+
       .widget-input:focus {
         outline: none;
         border-color: var(--input-focus-color);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
       }
+
       .widget-button {
         padding: 0.75rem 1.25rem;
         background: var(--primary-color);
         color: white;
         border: none;
-        border-radius: calc(var(--border-radius) * 0.66);
+        border-radius: 10px;
         cursor: pointer;
         font-weight: 600;
         font-size: 0.875rem;
-        transition: background 0.2s;
+        transition: background 0.2s, transform 0.1s;
         min-height: 44px;
         min-width: 44px;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
       }
+
       .widget-button:hover {
         background: var(--button-hover-color);
       }
+
       .widget-button:active {
         background: var(--button-hover-color);
-        filter: brightness(0.9);
+        transform: scale(0.98);
       }
+
       .widget-button:disabled {
-        background: #ccc;
+        background: #d1d5db;
         cursor: not-allowed;
+        transform: none;
+      }
+
+      .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 0.75rem 1rem;
+        background: var(--assistant-msg-color);
+        border: 1px solid var(--assistant-msg-border);
+        border-radius: 12px;
+        border-bottom-left-radius: 4px;
+        margin-right: 2.5rem;
+        width: fit-content;
+      }
+
+      .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        background: var(--text-secondary);
+        border-radius: 50%;
+        animation: bounce 1.4s infinite ease-in-out;
+      }
+
+      .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+      .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+      .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+      @keyframes bounce {
+        0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
       }
 
       /* Mobile full-screen overlay */
@@ -391,8 +500,9 @@
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.05);
+          background: rgba(0, 0, 0, 0.3);
           z-index: -1;
+          animation: fadeIn 0.2s ease-out;
         }
 
         .widget-container {
@@ -404,7 +514,7 @@
           width: 100%;
           max-width: 100%;
           height: 100vh;
-          padding: 1rem;
+          height: 100dvh;
           margin: 0;
           border: none;
           border-radius: 0;
@@ -415,12 +525,21 @@
 
         .widget-header {
           flex-shrink: 0;
-          margin-bottom: 1rem;
+          padding: 1rem;
+          border-radius: 0;
         }
 
         .widget-minimize-btn {
-          font-size: 1.5rem;
+          font-size: 1.75rem;
           padding: 0.5rem;
+        }
+
+        .widget-body {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding: 1rem;
+          overflow: hidden;
         }
 
         .widget-messages {
@@ -437,18 +556,25 @@
         }
 
         .message.user {
-          margin-left: 1rem;
+          margin-left: 1.5rem;
         }
-        .message.assistant {
-          margin-right: 1rem;
+        .message.assistant,
+        .typing-indicator {
+          margin-right: 1.5rem;
         }
+
         .widget-input {
-          font-size: 16px;
-          padding: 0.875rem;
-        }
-        .widget-button {
+          font-size: 1rem;
           padding: 0.875rem 1rem;
+        }
+
+        .widget-button {
+          padding: 0.875rem 1.25rem;
           min-height: 48px;
+        }
+
+        .widget-branding {
+          flex-shrink: 0;
         }
       }
 
@@ -457,6 +583,95 @@
         .widget-input {
           font-size: 16px !important;
         }
+      }
+
+      /* Glass/Frosted effect styles */
+      .widget-container.glass {
+        -webkit-backdrop-filter: blur(24px) saturate(180%);
+        backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18),
+                    0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .widget-container.glass::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          135deg,
+          rgba(255,255,255,0.45) 0%,
+          rgba(255,255,255,0.15) 35%,
+          rgba(255,255,255,0.05) 55%,
+          rgba(255,255,255,0.00) 100%
+        );
+        opacity: 0.5;
+        mix-blend-mode: overlay;
+        border-radius: inherit;
+      }
+
+      .widget-container.glass .widget-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+      }
+
+      .widget-container.glass .widget-messages {
+        background: rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .widget-container.glass .message.assistant {
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+      }
+
+      .widget-container.glass .widget-input {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+
+      .widget-container.glass .widget-input:focus {
+        background: rgba(255, 255, 255, 0.75);
+        border-color: var(--input-focus-color);
+      }
+
+      .widget-container.glass .widget-branding {
+        background: transparent;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      /* Dark mode for glass (Midnight preset) */
+      .widget-container.dark {
+        --text-primary: #f4f4f5;
+        --text-secondary: #a1a1aa;
+        --bg-subtle: rgba(39, 39, 42, 0.6);
+      }
+
+      .widget-container.dark .widget-header {
+        border-bottom-color: #3f3f46;
+      }
+
+      .widget-container.dark .widget-messages {
+        background: rgba(39, 39, 42, 0.5);
+      }
+
+      .widget-container.dark .widget-input {
+        background: rgba(39, 39, 42, 0.8);
+        border-color: #3f3f46;
+        color: #f4f4f5;
+      }
+
+      .widget-container.dark .widget-input::placeholder {
+        color: #71717a;
+      }
+
+      .widget-container.dark .widget-branding {
+        border-top-color: #3f3f46;
+      }
+
+      .widget-container.dark .widget-branding a {
+        color: #a1a1aa;
       }
     `;
     shadowRoot.appendChild(fullStyle);
@@ -475,15 +690,26 @@
       ? '<div class="widget-branding"><a href="https://lilwidget.com" target="_blank" rel="noopener">Powered by Lil\' Widget</a></div>'
       : '';
 
+    // Get widget title from config or use default
+    const widgetTitle = widgetConfig?.customization?.headerText || "Chat with us";
+
     container.innerHTML = `
-      <h4 class="widget-header">
-        <span class="widget-header-content">💬 Chat with us</span>
+      <div class="widget-header">
+        <div class="widget-header-content">
+          <span class="widget-header-icon">💬</span>
+          <div class="widget-header-info">
+            <div class="widget-header-title">${widgetTitle}</div>
+            <div class="widget-header-subtitle">We typically reply instantly</div>
+          </div>
+        </div>
         <button class="widget-minimize-btn" title="Close">×</button>
-      </h4>
-      <div class="widget-messages"></div>
-      <div class="widget-input-area">
-        <textarea class="widget-input" rows="2" placeholder="Type your message..."></textarea>
-        <button class="widget-button">Send</button>
+      </div>
+      <div class="widget-body">
+        <div class="widget-messages"></div>
+        <div class="widget-input-area">
+          <textarea class="widget-input" rows="1" placeholder="Type your message..."></textarea>
+          <button class="widget-button">Send</button>
+        </div>
       </div>
       ${brandingHTML}
     `;
@@ -492,11 +718,59 @@
     const textarea = container.querySelector(".widget-input");
     const button = container.querySelector(".widget-button");
     const headerEl = container.querySelector(".widget-header");
+    const headerIcon = container.querySelector(".widget-header-icon");
+    const headerTitle = container.querySelector(".widget-header-title");
+    const headerSubtitle = container.querySelector(".widget-header-subtitle");
     const minimizeBtn = container.querySelector(".widget-minimize-btn");
+
+    // Load Google Font dynamically
+    const loadedFonts = new Set();
+    function loadGoogleFont(fontFamily) {
+      if (!fontFamily) return;
+
+      // Extract the first font name (before fallbacks)
+      // Handle both quoted ('DM Sans') and unquoted (Inter) font names
+      const fontMatch = fontFamily.match(/^['"]?([^'",]+)/);
+      if (!fontMatch) {
+        console.log('[Widget] Could not extract font from:', fontFamily);
+        return;
+      }
+
+      const fontName = fontMatch[1].trim();
+      console.log('[Widget] Extracted font name:', fontName);
+
+      // Skip system fonts (these don't need to be loaded from Google)
+      const systemFonts = ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif', 'serif', 'monospace'];
+      if (systemFonts.some(sf => fontName.toLowerCase() === sf.toLowerCase())) {
+        console.log('[Widget] Skipping system font:', fontName);
+        return;
+      }
+
+      // Skip if already loaded by us
+      if (loadedFonts.has(fontName)) {
+        console.log('[Widget] Font already loaded:', fontName);
+        return;
+      }
+      loadedFonts.add(fontName);
+
+      // Create Google Fonts link
+      const fontUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
+      console.log('[Widget] Loading font from:', fontUrl);
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = fontUrl;
+      document.head.appendChild(link);
+    }
 
     // Apply customization to widget
     function applyCustomization(customization) {
       if (!customization) return;
+
+      // Load custom font if specified
+      if (customization.fontFamily) {
+        loadGoogleFont(customization.fontFamily);
+      }
 
       // Update CSS variables
       const root = shadowRoot.host;
@@ -532,41 +806,55 @@
       }
 
       // Update header text
-      if (customization.headerText) {
-        const headerContent = headerEl.querySelector(".widget-header-content");
-        if (headerContent) {
-          // Preserve logo if it exists
-          const existingLogo = headerEl.querySelector(".widget-logo");
-          if (existingLogo) {
-            headerContent.textContent = customization.headerText;
-          } else {
-            headerEl.innerHTML = `<span class="widget-header-content">${customization.headerText}</span><button class="widget-minimize-btn" title="Minimize">−</button>`;
-          }
-        }
+      if (customization.headerText && headerTitle) {
+        headerTitle.textContent = customization.headerText;
+      }
+
+      // Update header icon if provided
+      if (customization.headerIcon && headerIcon) {
+        headerIcon.textContent = customization.headerIcon;
       }
     }
 
-    // Display logo in widget header
-    function displayLogo(logoUrl) {
-      if (!logoUrl) return;
-
-      const headerContent = headerEl.querySelector(".widget-header-content");
-      if (!headerContent) return;
-
-      // Check if logo already exists
-      let logoImg = headerEl.querySelector(".widget-logo");
-      if (!logoImg) {
-        logoImg = document.createElement("img");
-        logoImg.className = "widget-logo";
-        logoImg.alt = "Logo";
-        // Insert logo before the header text
-        headerEl.insertBefore(logoImg, headerContent);
+    // Apply special theme classes based on preset style
+    function applyThemeClass(style) {
+      console.log('[Widget] applyThemeClass called with style:', style);
+      if (!container) {
+        console.log('[Widget] No container found');
+        return;
       }
 
+      // Remove existing theme classes
+      container.classList.remove("glass", "dark");
+
+      // Add appropriate class based on preset
+      if (style === "preset-glass") {
+        console.log('[Widget] Adding glass class');
+        container.classList.add("glass");
+      } else if (style === "preset-midnight") {
+        console.log('[Widget] Adding dark class');
+        container.classList.add("dark");
+      }
+    }
+
+    // Display logo in widget header (replaces icon)
+    function displayLogo(logoUrl) {
+      if (!logoUrl || !headerIcon) return;
+
+      // Create logo image
+      const logoImg = document.createElement("img");
+      logoImg.className = "widget-logo";
+      logoImg.alt = "Logo";
       logoImg.src = logoUrl;
+
+      logoImg.onload = function() {
+        // Replace icon with logo on successful load
+        headerIcon.replaceWith(logoImg);
+      };
+
       logoImg.onerror = function() {
-        // Hide logo if it fails to load
-        this.style.display = "none";
+        // Keep icon if logo fails to load
+        console.warn("Widget logo failed to load");
       };
     }
 
@@ -831,9 +1119,14 @@
     }
 
     // Apply config to widget
+    console.log('[Widget] widgetConfig:', widgetConfig);
     if (widgetConfig) {
+      console.log('[Widget] widgetConfig.style:', widgetConfig.style);
       if (widgetConfig.customization) {
         applyCustomization(widgetConfig.customization);
+      }
+      if (widgetConfig.style) {
+        applyThemeClass(widgetConfig.style);
       }
       if (widgetConfig.logoUrl) {
         displayLogo(widgetConfig.logoUrl);

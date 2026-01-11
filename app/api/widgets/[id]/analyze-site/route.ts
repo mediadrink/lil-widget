@@ -88,9 +88,9 @@ Website HTML (first 50KB):
 ${html.substring(0, 50000)}
 
 Please analyze the website's:
-1. Primary brand color (from logo, buttons, headers)
+1. Primary brand color (from logo, buttons, headers, links)
 2. Secondary/accent colors
-3. Font family used
+3. Body font family (look for font-family in CSS, Google Fonts links, or common patterns)
 4. Design style (modern, minimal, playful, professional, etc.)
 5. Border radius style (sharp, rounded, very rounded)
 
@@ -100,14 +100,17 @@ Based on this analysis, generate a JSON object with these exact fields:
   "userMsgColor": "#hexcolor (same as primaryColor)",
   "assistantMsgColor": "#hexcolor (light/neutral background for assistant messages)",
   "assistantMsgBorder": "#hexcolor (subtle border for assistant messages)",
-  "widgetBg": "#ffffff or slight tint",
-  "borderRadius": "4px to 20px based on site style",
-  "fontFamily": "CSS font-family that matches site",
-  "headerText": "Friendly chat header text (2-4 words)",
+  "widgetBg": "#ffffff or slight tint matching site background",
+  "borderRadius": "8px to 20px based on site style",
+  "fontFamily": "Site's body font FIRST, then fallbacks (e.g. 'Poppins', system-ui, sans-serif)",
+  "headerText": "Friendly chat header text (2-4 words, no emoji)",
+  "headerIcon": "Single emoji that fits the brand (e.g. 💬, 👋, ✨, 🏠, 💼)",
   "buttonHoverColor": "#hexcolor (darker shade of primaryColor)",
   "inputBorderColor": "#hexcolor (subtle border)",
   "inputFocusColor": "#hexcolor (accent when focused, often primaryColor)"
 }
+
+IMPORTANT: For fontFamily, put the website's actual font as the FIRST value, followed by system-ui, sans-serif as fallbacks.
 
 Respond with ONLY the JSON object, no explanation.`,
         },
@@ -151,6 +154,11 @@ Respond with ONLY the JSON object, no explanation.`,
       if (!(field in customization)) {
         throw new Error(`Generated style missing field: ${field}`);
       }
+    }
+
+    // Default headerIcon if not provided
+    if (!customization.headerIcon) {
+      customization.headerIcon = "💬";
     }
 
     return NextResponse.json({

@@ -25,7 +25,7 @@ export async function GET(
     // Fetch widget configuration (no auth check - public data)
     const { data: widget, error } = await supabaseAdmin
       .from("widgets")
-      .select("id, style, position, customization, logo_url, auto_open_delay, owner_id")
+      .select("id, style, position, customization, logo_url, owner_id")
       .eq("id", widgetId)
       .single();
 
@@ -56,9 +56,9 @@ export async function GET(
 
     return NextResponse.json({
       position: widget.position || "bottom-right",
+      style: widget.style || "preset-modern",
       customization,
       logoUrl: widget.logo_url || null,
-      autoOpenDelay: widget.auto_open_delay || 0,
       subscriptionTier,
     });
   } catch (err: any) {
