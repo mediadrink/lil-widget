@@ -270,8 +270,17 @@
       }
 
       .widget-header-icon {
-        font-size: 1.75rem;
+        font-size: 1.25rem;
         line-height: 1;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 70%, #000) 100%);
+        color: white;
+        flex-shrink: 0;
       }
 
       .widget-header-info {
@@ -331,7 +340,8 @@
       }
 
       .widget-messages {
-        max-height: 320px;
+        min-height: 280px;
+        max-height: 380px;
         overflow-y: auto;
         margin-bottom: 1rem;
         padding: 0.75rem;
@@ -405,9 +415,9 @@
 
       .widget-input {
         flex: 1;
-        padding: 0.75rem 1rem;
-        border: 1px solid var(--input-border-color);
-        border-radius: 10px;
+        padding: 0.875rem 1.25rem;
+        border: 1.5px solid var(--input-border-color);
+        border-radius: 24px;
         font-size: 0.9375rem;
         resize: none;
         font-family: inherit;
@@ -415,6 +425,7 @@
         touch-action: manipulation;
         transition: border-color 0.2s, box-shadow 0.2s;
         color: var(--text-primary);
+        background: var(--widget-bg);
       }
 
       .widget-input::placeholder {
@@ -424,32 +435,35 @@
       .widget-input:focus {
         outline: none;
         border-color: var(--input-focus-color);
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 15%, transparent);
       }
 
       .widget-button {
-        padding: 0.75rem 1.25rem;
-        background: var(--primary-color);
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        background: linear-gradient(135deg, var(--primary-color) 0%, color-mix(in srgb, var(--primary-color) 70%, #000) 100%);
         color: white;
         border: none;
-        border-radius: 10px;
+        border-radius: 50%;
         cursor: pointer;
-        font-weight: 600;
-        font-size: 0.875rem;
-        transition: background 0.2s, transform 0.1s;
-        min-height: 44px;
-        min-width: 44px;
+        font-size: 1.125rem;
+        transition: transform 0.2s, box-shadow 0.2s;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
       }
 
       .widget-button:hover {
-        background: var(--button-hover-color);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px color-mix(in srgb, var(--primary-color) 40%, transparent);
       }
 
       .widget-button:active {
-        background: var(--button-hover-color);
-        transform: scale(0.98);
+        transform: scale(0.95);
       }
 
       .widget-button:disabled {
@@ -569,8 +583,8 @@
         }
 
         .widget-button {
-          padding: 0.875rem 1.25rem;
-          min-height: 48px;
+          width: 48px;
+          height: 48px;
         }
 
         .widget-branding {
@@ -708,7 +722,7 @@
         <div class="widget-messages"></div>
         <div class="widget-input-area">
           <textarea class="widget-input" rows="1" placeholder="Type your message..."></textarea>
-          <button class="widget-button">Send</button>
+          <button class="widget-button" aria-label="Send message"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></button>
         </div>
       </div>
       ${brandingHTML}
@@ -729,37 +743,23 @@
       if (!fontFamily) return;
 
       // Extract the first font name (before fallbacks)
-      // Handle both quoted ('DM Sans') and unquoted (Inter) font names
       const fontMatch = fontFamily.match(/^['"]?([^'",]+)/);
-      if (!fontMatch) {
-        console.log('[Widget] Could not extract font from:', fontFamily);
-        return;
-      }
+      if (!fontMatch) return;
 
       const fontName = fontMatch[1].trim();
-      console.log('[Widget] Extracted font name:', fontName);
 
-      // Skip system fonts (these don't need to be loaded from Google)
+      // Skip system fonts
       const systemFonts = ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif', 'serif', 'monospace'];
-      if (systemFonts.some(sf => fontName.toLowerCase() === sf.toLowerCase())) {
-        console.log('[Widget] Skipping system font:', fontName);
-        return;
-      }
+      if (systemFonts.some(sf => fontName.toLowerCase() === sf.toLowerCase())) return;
 
-      // Skip if already loaded by us
-      if (loadedFonts.has(fontName)) {
-        console.log('[Widget] Font already loaded:', fontName);
-        return;
-      }
+      // Skip if already loaded
+      if (loadedFonts.has(fontName)) return;
       loadedFonts.add(fontName);
 
       // Create Google Fonts link
-      const fontUrl = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
-      console.log('[Widget] Loading font from:', fontUrl);
-
       const link = document.createElement('link');
       link.rel = 'stylesheet';
-      link.href = fontUrl;
+      link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/\s+/g, '+')}:wght@400;500;600;700&display=swap`;
       document.head.appendChild(link);
     }
 
@@ -818,21 +818,15 @@
 
     // Apply special theme classes based on preset style
     function applyThemeClass(style) {
-      console.log('[Widget] applyThemeClass called with style:', style);
-      if (!container) {
-        console.log('[Widget] No container found');
-        return;
-      }
+      if (!container) return;
 
       // Remove existing theme classes
       container.classList.remove("glass", "dark");
 
       // Add appropriate class based on preset
       if (style === "preset-glass") {
-        console.log('[Widget] Adding glass class');
         container.classList.add("glass");
       } else if (style === "preset-midnight") {
-        console.log('[Widget] Adding dark class');
         container.classList.add("dark");
       }
     }
@@ -1119,9 +1113,7 @@
     }
 
     // Apply config to widget
-    console.log('[Widget] widgetConfig:', widgetConfig);
     if (widgetConfig) {
-      console.log('[Widget] widgetConfig.style:', widgetConfig.style);
       if (widgetConfig.customization) {
         applyCustomization(widgetConfig.customization);
       }
