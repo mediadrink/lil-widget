@@ -1139,10 +1139,18 @@
     textarea.focus();
   }
 
-  // Bubble click handler - loads full widget
+  // Bubble click handler - loads full widget or shows it if already loaded
   bubbleElement.onclick = () => {
     localStorage.setItem(minimizedKey, "false");
-    loadFullWidget();
+    if (isFullWidgetLoaded && container) {
+      // Widget already loaded, just show it
+      bubbleElement.style.display = "none";
+      container.style.display = "";
+      const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
+      if (backdrop) backdrop.style.display = "";
+    } else {
+      loadFullWidget();
+    }
   };
 
   // If widget was not minimized last time, load it immediately
