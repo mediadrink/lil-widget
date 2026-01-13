@@ -34,6 +34,9 @@ type Widget = {
   logo_url?: string | null;
   crawl_tier?: string;
   owner_id?: string;
+  kb_type?: string;
+  external_kb_url?: string | null;
+  external_kb_api_key?: string | null;
 };
 
 type Rule = {
@@ -125,6 +128,8 @@ export default function AdminConsolePage(
   const [deepCrawlBusy, setDeepCrawlBusy] = React.useState(false);
   const [knowledgeBase, setKnowledgeBase] = React.useState<any>(null);
   const [userTier, setUserTier] = React.useState<string>("free");
+  const [testingExternalKB, setTestingExternalKB] = React.useState(false);
+  const [externalKBStatus, setExternalKBStatus] = React.useState<"connected" | "error" | null>(null);
 
   // Edit mode states
   const [editingBasicInfo, setEditingBasicInfo] = React.useState(false);
@@ -140,6 +145,9 @@ export default function AdminConsolePage(
     position: "bottom-right",
     customization: null,
     logo_url: null,
+    kb_type: "crawl",
+    external_kb_url: null,
+    external_kb_api_key: null,
   });
 
   const [analyzingSite, setAnalyzingSite] = React.useState(false);
@@ -245,6 +253,9 @@ export default function AdminConsolePage(
           crawl_tier: w?.crawl_tier ?? "basic",
           owner_id: w?.owner_id,
           logo_url: w?.logo_url,
+          kb_type: w?.kb_type ?? "crawl",
+          external_kb_url: w?.external_kb_url ?? null,
+          external_kb_api_key: w?.external_kb_api_key ?? null,
         }));
 
         // Load rules
@@ -542,6 +553,39 @@ export default function AdminConsolePage(
       showErrorToast(`Expanded crawl failed: ${err.message || String(err)}`);
     } finally {
       setDeepCrawlBusy(false);
+    }
+  }
+
+  async function testExternalKB() {
+    if (!widget.external_kb_url) {
+      showInfoToast("Enter an API URL first");
+      return;
+    }
+    setTestingExternalKB(true);
+    setExternalKBStatus(null);
+    try {
+      const res = await fetchJSON<{ success: boolean; error?: string }>(
+        `/api/widget/${widgetId}/test-external-kb`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            url: widget.external_kb_url,
+            apiKey: widget.external_kb_api_key,
+          }),
+        }
+      );
+      if (res?.success) {
+        setExternalKBStatus("connected");
+        showSuccessToast("External API connected successfully!");
+      } else {
+        setExternalKBStatus("error");
+        showErrorToast(res?.error || "Failed to connect to external API");
+      }
+    } catch (err: any) {
+      setExternalKBStatus("error");
+      showErrorToast(`Connection failed: ${err.message || String(err)}`);
+    } finally {
+      setTestingExternalKB(false);
     }
   }
 
@@ -992,7 +1036,7 @@ export default function AdminConsolePage(
               )}
             </section>
 
-            {/* Knowledge Base (Premium) */}
+            {/* Knowledge Base */}
             <section className="bg-white rounded-2xl border border-neutral-200 p-8 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
@@ -1000,10 +1044,15 @@ export default function AdminConsolePage(
                     📚 Knowledge Base
                   </div>
                   <TooltipIcon
-                    content="Expanded crawl extracts detailed business information (services, team, menu, FAQ) that your widget can reference during conversations. Separate from personality."
+                    content="Choose between web crawl (extract data from your website) or connect to an external knowledge base API."
                     position="right"
                   />
-                  {(widget.crawl_tier === "deep" || userTier === "paid") && (
+                  {widget.kb_type === "external" && (
+                    <span className="inline-block bg-gradient-to-r from-purple-400 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      🔌 EXTERNAL API
+                    </span>
+                  )}
+                  {widget.kb_type !== "external" && (widget.crawl_tier === "deep" || userTier === "paid") && (
                     <span className="inline-block bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-900 text-xs font-bold px-3 py-1 rounded-full">
                       ⭐ PREMIUM
                     </span>
@@ -1011,7 +1060,120 @@ export default function AdminConsolePage(
                 </div>
               </div>
 
-              {widget.crawl_tier === "deep" && knowledgeBase ? (
+              {/* KB Type Toggle */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={async () => {
+                    setWidget((w) => ({ ...w, kb_type: "crawl" }));
+                    await saveWidget({ kb_type: "crawl" });
+                    setExternalKBStatus(null);
+                  }}
+                  className={cx(
+                    "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all",
+                    widget.kb_type !== "external"
+                      ? "bg-neutral-900 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  )}
+                >
+                  🌐 Web Crawl
+                </button>
+                <button
+                  onClick={async () => {
+                    setWidget((w) => ({ ...w, kb_type: "external" }));
+                    await saveWidget({ kb_type: "external" });
+                  }}
+                  className={cx(
+                    "flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all",
+                    widget.kb_type === "external"
+                      ? "bg-purple-600 text-white"
+                      : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  )}
+                >
+                  🔌 External API
+                </button>
+              </div>
+
+              {/* External API Configuration */}
+              {widget.kb_type === "external" && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-purple-900 mb-4">
+                    Connect your widget to an external knowledge base API. The API should accept POST requests with a JSON body containing a "question" field.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-purple-900 mb-1">
+                        API URL *
+                      </label>
+                      <input
+                        type="url"
+                        className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+                        placeholder="https://api.example.com/chat"
+                        value={widget.external_kb_url || ""}
+                        onChange={(e) =>
+                          setWidget((w) => ({ ...w, external_kb_url: e.target.value }))
+                        }
+                        onBlur={() =>
+                          saveWidget({ external_kb_url: widget.external_kb_url || null })
+                        }
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-purple-900 mb-1">
+                        API Key (optional)
+                      </label>
+                      <input
+                        type="password"
+                        className="w-full rounded-lg border border-purple-300 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none"
+                        placeholder="Bearer token or API key"
+                        value={widget.external_kb_api_key || ""}
+                        onChange={(e) =>
+                          setWidget((w) => ({ ...w, external_kb_api_key: e.target.value }))
+                        }
+                        onBlur={() =>
+                          saveWidget({ external_kb_api_key: widget.external_kb_api_key || null })
+                        }
+                      />
+                      <p className="text-xs text-purple-700 mt-1">
+                        Sent as "Authorization: Bearer &lt;key&gt;" header
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={testExternalKB}
+                        disabled={testingExternalKB || !widget.external_kb_url}
+                        className="rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 disabled:opacity-50 transition-colors text-sm"
+                      >
+                        {testingExternalKB ? "Testing..." : "Test Connection"}
+                      </button>
+
+                      {externalKBStatus === "connected" && (
+                        <span className="flex items-center gap-1 text-sm text-emerald-600 font-medium">
+                          <span>✅</span> Connected
+                        </span>
+                      )}
+                      {externalKBStatus === "error" && (
+                        <span className="flex items-center gap-1 text-sm text-red-600 font-medium">
+                          <span>❌</span> Connection failed
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 p-3 bg-white/50 rounded-lg">
+                    <p className="text-xs text-purple-800 font-medium mb-1">Expected API Response Format:</p>
+                    <pre className="text-xs text-purple-700 overflow-x-auto">{`{
+  "answer": "Response text...",
+  "sources": [{ "meeting_title": "...", "excerpt": "..." }]
+}`}</pre>
+                  </div>
+                </div>
+              )}
+
+              {/* Crawl-based Knowledge Base (only shown when kb_type is crawl) */}
+              {widget.kb_type !== "external" && widget.crawl_tier === "deep" && knowledgeBase ? (
                 /* Has Knowledge Base */
                 <div>
                   <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
@@ -1076,8 +1238,8 @@ export default function AdminConsolePage(
                     {deepCrawlBusy ? "Re-crawling..." : "🔄 Re-run Deep Crawl"}
                   </button>
                 </div>
-              ) : (
-                /* No Knowledge Base */
+              ) : widget.kb_type !== "external" ? (
+                /* No Knowledge Base - show crawl options */
                 <div>
                   {userTier === "paid" ? (
                     /* Paid user - can run deep crawl */
@@ -1133,7 +1295,7 @@ export default function AdminConsolePage(
                     </div>
                   )}
                 </div>
-              )}
+              ) : null}
             </section>
 
             {/* Rules */}

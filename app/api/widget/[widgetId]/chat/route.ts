@@ -240,10 +240,10 @@ export async function POST(
       );
     }
 
-    // Ensure widget exists and get owner
+    // Ensure widget exists and get owner + external KB settings
     const { data: widget } = await supabaseAdmin
       .from("widgets")
-      .select("id, owner_id")
+      .select("id, owner_id, kb_type, external_kb_url, external_kb_api_key")
       .eq("id", widgetId)
       .single();
 
@@ -260,6 +260,70 @@ export async function POST(
           },
         }
       );
+    }
+
+    // Handle external knowledge base API
+    if (widget.kb_type === "external" && widget.external_kb_url) {
+      try {
+        const externalHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (widget.external_kb_api_key) {
+          externalHeaders["Authorization"] = `Bearer ${widget.external_kb_api_key}`;
+        }
+
+        const externalResponse = await fetch(widget.external_kb_url, {
+          method: "POST",
+          headers: externalHeaders,
+          body: JSON.stringify({ question: message }),
+          signal: AbortSignal.timeout(30000), // 30 second timeout
+        });
+
+        if (!externalResponse.ok) {
+          throw new Error(`External API returned ${externalResponse.status}`);
+        }
+
+        const externalData = await externalResponse.json();
+
+        // Return the external API response directly
+        // Format: { answer: string, sources?: array }
+        return new Response(
+          JSON.stringify({
+            conversationId: conversationId || null,
+            reply: externalData.answer || externalData.response || "No response from knowledge base.",
+            sources: externalData.sources || [],
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type",
+              "X-RateLimit-Limit": rateLimit.limit.toString(),
+              "X-RateLimit-Remaining": rateLimit.remaining.toString(),
+            },
+          }
+        );
+      } catch (externalError: any) {
+        console.error("External KB error:", externalError);
+        return new Response(
+          JSON.stringify({
+            conversationId: conversationId || null,
+            reply: "Sorry, I'm having trouble connecting to the knowledge base. Please try again later.",
+            error: externalError.message,
+          }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*",
+              "Access-Control-Allow-Methods": "POST, OPTIONS",
+              "Access-Control-Allow-Headers": "Content-Type",
+            },
+          }
+        );
+      }
     }
 
     // Rate limiting: Check if user has exceeded free tier limit
