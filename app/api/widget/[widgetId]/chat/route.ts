@@ -284,45 +284,46 @@ export async function POST(
         }
 
         const externalData = await externalResponse.json();
+        const reply = externalData.answer || externalData.response || "No response from knowledge base.";
 
-        // Return the external API response directly
-        // Format: { answer: string, sources?: array }
-        return new Response(
-          JSON.stringify({
-            conversationId: conversationId || null,
-            reply: externalData.answer || externalData.response || "No response from knowledge base.",
-            sources: externalData.sources || [],
-          }),
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "POST, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "X-RateLimit-Limit": rateLimit.limit.toString(),
-              "X-RateLimit-Remaining": rateLimit.remaining.toString(),
-            },
-          }
-        );
+        // Return as SSE stream format for widget compatibility
+        const sseData = [
+          `data: ${JSON.stringify({ conversationId: conversationId || null, content: reply })}\n\n`,
+          `data: [DONE]\n\n`,
+        ].join("");
+
+        return new Response(sseData, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+            "X-RateLimit-Limit": rateLimit.limit.toString(),
+            "X-RateLimit-Remaining": rateLimit.remaining.toString(),
+          },
+        });
       } catch (externalError: any) {
         console.error("External KB error:", externalError);
-        return new Response(
-          JSON.stringify({
-            conversationId: conversationId || null,
-            reply: "Sorry, I'm having trouble connecting to the knowledge base. Please try again later.",
-            error: externalError.message,
-          }),
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Methods": "POST, OPTIONS",
-              "Access-Control-Allow-Headers": "Content-Type",
-            },
-          }
-        );
+        const errorReply = "Sorry, I'm having trouble connecting to the knowledge base. Please try again later.";
+        const sseErrorData = [
+          `data: ${JSON.stringify({ conversationId: conversationId || null, content: errorReply })}\n\n`,
+          `data: [DONE]\n\n`,
+        ].join("");
+
+        return new Response(sseErrorData, {
+          status: 200,
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type",
+          },
+        });
       }
     }
 
