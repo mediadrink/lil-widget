@@ -32,7 +32,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("widgets")
-    .select("id, owner_id, title, url, persona_text, style, position, customization, kb_type, external_kb_url")
+    .select("id, owner_id, title, url, persona_text, style, position, customization, kb_type, external_kb_url, external_kb_api_key")
     .eq("id", widgetId)
     .maybeSingle();
 
@@ -87,6 +87,7 @@ export async function PUT(
     persona_updated_at?: string;
     kb_type?: string;
     external_kb_url?: string | null;
+    external_kb_api_key?: string | null;
   } = {
     title: body?.title,
     url: body?.url,
@@ -96,6 +97,7 @@ export async function PUT(
     customization: body?.customization,
     kb_type: body?.kb_type,
     external_kb_url: body?.external_kb_url,
+    external_kb_api_key: body?.external_kb_api_key,
   };
 
   // If persona_text is being updated, set persona_updated_at timestamp
@@ -125,7 +127,7 @@ export async function PUT(
     .from("widgets")
     .update(payload)
     .eq("id", widgetId)
-    .select("id, title, url, persona_text, style, position, customization, kb_type, external_kb_url")
+    .select("id, title, url, persona_text, style, position, customization, kb_type, external_kb_url, external_kb_api_key")
     .maybeSingle();
 
   if (error) {
