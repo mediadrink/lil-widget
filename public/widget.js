@@ -1200,6 +1200,13 @@
           document.body.appendChild(shadowHost);
         }
         loadFullWidget();
+      } else {
+        // Show widget if already loaded but hidden
+        const container = shadowRoot.querySelector(".widget-container");
+        const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
+        if (container) container.style.display = "";
+        if (backdrop) backdrop.style.display = "";
+        bubbleElement.style.display = "none";
       }
     },
     close: function() {
@@ -1215,6 +1222,31 @@
         }
         bubbleElement.style.display = "flex";
       }
+    },
+    sendMessage: function(message, autoSend = true) {
+      // Open widget first
+      this.open();
+
+      // Wait for widget to load, then set message
+      const checkAndSend = () => {
+        const textarea = shadowRoot.querySelector(".widget-input");
+        const button = shadowRoot.querySelector(".widget-button");
+
+        if (textarea && button) {
+          textarea.value = message;
+          textarea.focus();
+
+          if (autoSend) {
+            // Small delay to ensure UI is ready
+            setTimeout(() => button.click(), 100);
+          }
+        } else {
+          // Widget not ready yet, retry
+          setTimeout(checkAndSend, 100);
+        }
+      };
+
+      setTimeout(checkAndSend, 100);
     }
   };
 })();
