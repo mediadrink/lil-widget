@@ -278,7 +278,7 @@
         max-width: calc(100vw - 40px);
         box-shadow: 0 20px 40px rgba(0,0,0,0.15), 0 8px 16px rgba(0,0,0,0.1);
         position: fixed;
-        bottom: 24px;
+        bottom: 96px;
         right: 24px;
         overflow: hidden;
         display: flex;
@@ -432,6 +432,59 @@
       .widget-input-area {
         display: flex;
         gap: 0.625rem;
+      }
+
+      .widget-detail-bar {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .widget-detail-bar label {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+        white-space: nowrap;
+        min-width: 36px;
+      }
+
+      .widget-detail-bar input[type="range"] {
+        flex: 1;
+        height: 4px;
+        -webkit-appearance: none;
+        appearance: none;
+        background: var(--input-border-color);
+        border-radius: 2px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      .widget-detail-bar input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .widget-detail-bar input[type="range"]::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .widget-detail-level {
+        font-size: 0.6875rem;
+        color: var(--text-secondary);
+        min-width: 44px;
+        text-align: right;
       }
 
       .widget-branding {
@@ -781,6 +834,11 @@
       </div>
       <div class="widget-body">
         <div class="widget-messages"></div>
+        <div class="widget-detail-bar">
+          <label>Brief</label>
+          <input type="range" class="widget-detail-slider" min="1" max="5" value="3" step="1">
+          <span class="widget-detail-level">Balanced</span>
+        </div>
         <div class="widget-input-area">
           <textarea class="widget-input" rows="1" placeholder="Type your message..."></textarea>
           <button class="widget-button" aria-label="Send message"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg></button>
@@ -797,6 +855,17 @@
     const headerTitle = container.querySelector(".widget-header-title");
     const headerSubtitle = container.querySelector(".widget-header-subtitle");
     const minimizeBtn = container.querySelector(".widget-minimize-btn");
+    const detailSlider = container.querySelector(".widget-detail-slider");
+    const detailLevel = container.querySelector(".widget-detail-level");
+
+    // Detail level labels
+    const detailLabels = { 1: "Brief", 2: "Concise", 3: "Balanced", 4: "Detailed", 5: "In-depth" };
+    let currentDetailLevel = 3;
+
+    detailSlider.addEventListener("input", () => {
+      currentDetailLevel = parseInt(detailSlider.value);
+      detailLevel.textContent = detailLabels[currentDetailLevel];
+    });
 
     // Load Google Font dynamically
     const loadedFonts = new Set();
@@ -1028,8 +1097,8 @@
             return;
           }
 
-          // Reveal 3 words per tick
-          for (let i = 0; i < 3 && wordIndex < words.length; i++) {
+          // Reveal 2 words per tick
+          for (let i = 0; i < 2 && wordIndex < words.length; i++) {
             currentText += words[wordIndex];
             wordIndex++;
           }
@@ -1051,7 +1120,7 @@
             scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
           }
 
-          setTimeout(tick, 30);
+          setTimeout(tick, 50);
         }
 
         tick();
@@ -1074,7 +1143,8 @@
             widgetId: widgetId,
             conversationId: conversationId || undefined,
             visitorId: null,
-            stream: true, // Enable streaming
+            stream: true,
+            detailLevel: currentDetailLevel,
           }),
           signal: controller.signal,
         });

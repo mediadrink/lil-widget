@@ -13,13 +13,31 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Detail level instructions mapped 1-5
+const DETAIL_INSTRUCTIONS: Record<number, string> = {
+  1: "Be extremely brief. Answer in 1-2 short sentences max. No lists, no elaboration.",
+  2: "Be concise. Answer in 2-3 sentences. Only include the most essential information.",
+  3: "Give a balanced response. Be helpful but don't over-explain. Use short paragraphs.",
+  4: "Give a detailed response. Include relevant context, examples, and supporting points.",
+  5: "Give a thorough, in-depth response. Include full context, examples, caveats, and related information.",
+};
+
+const DETAIL_MAX_TOKENS: Record<number, number> = {
+  1: 100,
+  2: 200,
+  3: 500,
+  4: 800,
+  5: 1200,
+};
+
 // Build messages array for OpenAI
 async function buildMessages(params: {
   widgetId: string;
   conversationId: string;
   message: string;
+  detailLevel?: number;
 }) {
-  const { widgetId, conversationId, message } = params;
+  const { widgetId, conversationId, message, detailLevel } = params;
 
   // Fetch widget config (persona and crawl tier)
   const { data: widget } = await supabaseAdmin
@@ -146,7 +164,12 @@ async function buildMessages(params: {
   }
 
   // 4. Add formatting instructions
+  const level = detailLevel && detailLevel >= 1 && detailLevel <= 5 ? detailLevel : 3;
+  const detailInstruction = DETAIL_INSTRUCTIONS[level];
+
   systemMessage += `---
+
+RESPONSE LENGTH: ${detailInstruction}
 
 FORMATTING INSTRUCTIONS:
 - Use markdown formatting to make your responses clear and scannable
@@ -193,7 +216,7 @@ export async function POST(
   try {
     const params = await context.params;
     const { widgetId } = params;
-    const { conversationId, message, visitorId, isTest, stream } = await req.json();
+    const { conversationId, message, visitorId, isTest, stream, detailLevel } = await req.json();
 
     // Rate limiting - prevent bot abuse
     const clientIp = getClientIp(req);
@@ -275,7 +298,7 @@ export async function POST(
         const externalResponse = await fetch(widget.external_kb_url, {
           method: "POST",
           headers: externalHeaders,
-          body: JSON.stringify({ question: message }),
+          body: JSON.stringify({ question: message, detailLevel: detailLevel || 3 }),
           signal: AbortSignal.timeout(30000), // 30 second timeout
         });
 
@@ -483,8 +506,13 @@ export async function POST(
     const messages = await buildMessages({
       widgetId,
       conversationId: convId!,
-      message: String(message)
+      message: String(message),
+      detailLevel: detailLevel ? Number(detailLevel) : undefined,
     });
+
+    // Compute max_tokens based on detail level
+    const dlevel = detailLevel && detailLevel >= 1 && detailLevel <= 5 ? Number(detailLevel) : 3;
+    const maxTokens = DETAIL_MAX_TOKENS[dlevel];
 
     // If streaming is requested, use streaming response
     if (stream) {
@@ -498,7 +526,7 @@ export async function POST(
               model: "gpt-4o",
               messages,
               temperature: 0.7,
-              max_tokens: 500,
+              max_tokens: maxTokens,
               stream: true,
             });
 
@@ -574,7 +602,7 @@ export async function POST(
         model: "gpt-4o",
         messages,
         temperature: 0.7,
-        max_tokens: 500,
+        max_tokens: maxTokens,
       });
 
       const reply = chatResponse.choices?.[0]?.message?.content ||
