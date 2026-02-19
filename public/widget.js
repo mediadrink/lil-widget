@@ -454,23 +454,22 @@
 
       .widget-detail-track {
         position: relative;
-        display: flex;
-        align-items: center;
-        gap: 0;
-        padding: 0 7px;
+        height: 24px;
       }
 
       .widget-detail-track input[type="range"] {
-        flex: 1;
-        height: 20px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         -webkit-appearance: none;
         appearance: none;
         background: transparent;
         outline: none;
         cursor: pointer;
-        position: relative;
-        z-index: 2;
         margin: 0;
+        z-index: 1;
       }
 
       .widget-detail-track input[type="range"]::-webkit-slider-runnable-track {
@@ -481,14 +480,16 @@
 
       .widget-detail-track input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: var(--primary-color);
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-        margin-top: -7px;
+        margin-top: -8px;
+        position: relative;
+        z-index: 4;
       }
 
       .widget-detail-track input[type="range"]::-moz-range-track {
@@ -498,8 +499,8 @@
       }
 
       .widget-detail-track input[type="range"]::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: var(--primary-color);
         cursor: pointer;
@@ -510,35 +511,25 @@
       .widget-detail-ticks {
         position: absolute;
         top: 50%;
-        left: 7px;
-        right: 7px;
+        left: 8px;
+        right: 8px;
         transform: translateY(-50%);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 1;
-        pointer-events: none;
-      }
-
-      .widget-detail-ticks::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 0;
-        right: 0;
         height: 2px;
         background: var(--input-border-color);
         border-radius: 1px;
-        transform: translateY(-50%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 2;
+        pointer-events: none;
       }
 
       .widget-detail-tick {
-        width: 6px;
-        height: 6px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background: var(--input-border-color);
-        position: relative;
-        z-index: 1;
+        flex-shrink: 0;
       }
 
       .widget-detail-endpoints {
