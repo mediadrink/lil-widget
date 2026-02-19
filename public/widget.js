@@ -435,56 +435,119 @@
       }
 
       .widget-detail-bar {
+        margin-bottom: 0.5rem;
+        position: relative;
+      }
+
+      .widget-detail-label-row {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 0.25rem;
+      }
+
+      .widget-detail-current {
+        font-size: 0.6875rem;
+        font-weight: 500;
+        color: var(--primary-color);
+        text-align: center;
+      }
+
+      .widget-detail-track {
+        position: relative;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
+        gap: 0;
+        padding: 0 7px;
       }
 
-      .widget-detail-bar label {
-        font-size: 0.6875rem;
-        color: var(--text-secondary);
-        white-space: nowrap;
-        min-width: 36px;
-      }
-
-      .widget-detail-bar input[type="range"] {
+      .widget-detail-track input[type="range"] {
         flex: 1;
         height: 4px;
         -webkit-appearance: none;
         appearance: none;
-        background: var(--input-border-color);
-        border-radius: 2px;
+        background: transparent;
         outline: none;
         cursor: pointer;
+        position: relative;
+        z-index: 2;
+        margin: 0;
       }
 
-      .widget-detail-bar input[type="range"]::-webkit-slider-thumb {
+      .widget-detail-track input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
-        width: 14px;
-        height: 14px;
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: var(--primary-color);
         cursor: pointer;
         border: 2px solid white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        position: relative;
+        z-index: 3;
       }
 
-      .widget-detail-bar input[type="range"]::-moz-range-thumb {
-        width: 14px;
-        height: 14px;
+      .widget-detail-track input[type="range"]::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         background: var(--primary-color);
         cursor: pointer;
         border: 2px solid white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+        position: relative;
+        z-index: 3;
       }
 
-      .widget-detail-level {
-        font-size: 0.6875rem;
+      .widget-detail-track input[type="range"]::-moz-range-track {
+        background: transparent;
+        border: none;
+        height: 4px;
+      }
+
+      .widget-detail-ticks {
+        position: absolute;
+        top: 50%;
+        left: 7px;
+        right: 7px;
+        transform: translateY(-50%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 1;
+        pointer-events: none;
+      }
+
+      .widget-detail-ticks::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--input-border-color);
+        border-radius: 1px;
+        transform: translateY(-50%);
+      }
+
+      .widget-detail-tick {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--input-border-color);
+        position: relative;
+        z-index: 1;
+      }
+
+      .widget-detail-endpoints {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.25rem;
+        padding: 0 2px;
+      }
+
+      .widget-detail-endpoints span {
+        font-size: 0.625rem;
         color: var(--text-secondary);
-        min-width: 44px;
-        text-align: right;
       }
 
       .widget-branding {
@@ -835,9 +898,23 @@
       <div class="widget-body">
         <div class="widget-messages"></div>
         <div class="widget-detail-bar">
-          <label>Brief</label>
-          <input type="range" class="widget-detail-slider" min="1" max="5" value="3" step="1">
-          <span class="widget-detail-level">Balanced</span>
+          <div class="widget-detail-label-row">
+            <span class="widget-detail-current">Balanced</span>
+          </div>
+          <div class="widget-detail-track">
+            <input type="range" class="widget-detail-slider" min="1" max="5" value="3" step="1">
+            <div class="widget-detail-ticks">
+              <span class="widget-detail-tick"></span>
+              <span class="widget-detail-tick"></span>
+              <span class="widget-detail-tick"></span>
+              <span class="widget-detail-tick"></span>
+              <span class="widget-detail-tick"></span>
+            </div>
+          </div>
+          <div class="widget-detail-endpoints">
+            <span>Brief</span>
+            <span>In-depth</span>
+          </div>
         </div>
         <div class="widget-input-area">
           <textarea class="widget-input" rows="1" placeholder="Type your message..."></textarea>
@@ -856,7 +933,7 @@
     const headerSubtitle = container.querySelector(".widget-header-subtitle");
     const minimizeBtn = container.querySelector(".widget-minimize-btn");
     const detailSlider = container.querySelector(".widget-detail-slider");
-    const detailLevel = container.querySelector(".widget-detail-level");
+    const detailCurrent = container.querySelector(".widget-detail-current");
 
     // Detail level labels
     const detailLabels = { 1: "Brief", 2: "Concise", 3: "Balanced", 4: "Detailed", 5: "In-depth" };
@@ -864,7 +941,7 @@
 
     detailSlider.addEventListener("input", () => {
       currentDetailLevel = parseInt(detailSlider.value);
-      detailLevel.textContent = detailLabels[currentDetailLevel];
+      detailCurrent.textContent = detailLabels[currentDetailLevel];
     });
 
     // Load Google Font dynamically
