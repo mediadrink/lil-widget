@@ -462,7 +462,7 @@
 
       .widget-detail-track input[type="range"] {
         flex: 1;
-        height: 4px;
+        height: 20px;
         -webkit-appearance: none;
         appearance: none;
         background: transparent;
@@ -471,6 +471,12 @@
         position: relative;
         z-index: 2;
         margin: 0;
+      }
+
+      .widget-detail-track input[type="range"]::-webkit-slider-runnable-track {
+        height: 2px;
+        background: transparent;
+        border: none;
       }
 
       .widget-detail-track input[type="range"]::-webkit-slider-thumb {
@@ -482,8 +488,13 @@
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-        position: relative;
-        z-index: 3;
+        margin-top: -7px;
+      }
+
+      .widget-detail-track input[type="range"]::-moz-range-track {
+        height: 2px;
+        background: transparent;
+        border: none;
       }
 
       .widget-detail-track input[type="range"]::-moz-range-thumb {
@@ -494,14 +505,6 @@
         cursor: pointer;
         border: 2px solid white;
         box-shadow: 0 1px 4px rgba(0,0,0,0.25);
-        position: relative;
-        z-index: 3;
-      }
-
-      .widget-detail-track input[type="range"]::-moz-range-track {
-        background: transparent;
-        border: none;
-        height: 4px;
       }
 
       .widget-detail-ticks {
