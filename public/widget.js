@@ -115,6 +115,28 @@
       transform: scale(1.02);
     }
 
+    .bubble-icon {
+      position: absolute;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    .bubble-icon-chat {
+      opacity: 1;
+      transform: rotate(0deg) scale(1);
+    }
+    .bubble-icon-close {
+      opacity: 0;
+      transform: rotate(-90deg) scale(0.5);
+      font-style: normal;
+    }
+    .widget-chat-bubble.widget-open .bubble-icon-chat {
+      opacity: 0;
+      transform: rotate(90deg) scale(0.5);
+    }
+    .widget-chat-bubble.widget-open .bubble-icon-close {
+      opacity: 1;
+      transform: rotate(0deg) scale(1);
+    }
+
     @media (max-width: 480px) {
       .widget-chat-bubble {
         width: 60px;
@@ -129,7 +151,7 @@
   // Create chat bubble
   const bubbleElement = document.createElement("div");
   bubbleElement.className = "widget-chat-bubble";
-  bubbleElement.innerHTML = "💬";
+  bubbleElement.innerHTML = '<span class="bubble-icon bubble-icon-chat"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="bubble-icon bubble-icon-close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>';
   bubbleElement.title = "Open chat";
 
   // Position bubble based on config
@@ -198,18 +220,22 @@
     if (isMobile) {
       container.style.left = "";
       container.style.right = "";
-      container.style.transform = "";
+      container.style.marginLeft = "";
+      container.style.marginRight = "";
       return;
     }
 
-    // Desktop positioning
+    // Desktop positioning (avoid inline transform — it's used by open/close animation)
     container.style.left = "auto";
     container.style.right = "auto";
-    container.style.transform = "none";
+    container.style.marginLeft = "";
+    container.style.marginRight = "";
 
     if (position === "bottom-center") {
-      container.style.left = "50%";
-      container.style.transform = "translateX(-50%)";
+      container.style.left = "0";
+      container.style.right = "0";
+      container.style.marginLeft = "auto";
+      container.style.marginRight = "auto";
     } else if (position.includes("right")) {
       container.style.right = "20px";
     } else if (position.includes("left")) {
@@ -221,10 +247,8 @@
     if (isFullWidgetLoaded) return;
     isFullWidgetLoaded = true;
 
-    // Hide bubble
-    if (bubbleElement.parentNode) {
-      bubbleElement.style.display = "none";
-    }
+    // Animate bubble to close icon
+    bubbleElement.classList.add("widget-open");
 
     // Add full widget styles
     const fullStyle = document.createElement("style");
@@ -257,6 +281,19 @@
         bottom: 24px;
         right: 24px;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transform: translateY(8px) scale(0.98);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                    opacity 0.2s ease;
+      }
+
+      .widget-container.widget-visible {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+        pointer-events: all;
       }
 
       .widget-header {
@@ -320,7 +357,6 @@
       .widget-minimize-btn {
         background: none;
         border: none;
-        font-size: 1.5rem;
         cursor: pointer;
         padding: 0.375rem;
         border-radius: 8px;
@@ -328,6 +364,9 @@
         color: var(--text-secondary);
         line-height: 1;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .widget-minimize-btn:hover {
@@ -501,6 +540,29 @@
         40% { transform: scale(1); opacity: 1; }
       }
 
+      .message .typing-indicator {
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: 0;
+        margin: 0;
+      }
+
+      .typing-cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        background: var(--text-primary);
+        margin-left: 1px;
+        vertical-align: text-bottom;
+        animation: cursorBlink 0.8s step-end infinite;
+      }
+
+      @keyframes cursorBlink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+      }
+
       /* Mobile full-screen overlay */
       .widget-mobile-backdrop {
         display: none;
@@ -544,7 +606,6 @@
         }
 
         .widget-minimize-btn {
-          font-size: 1.75rem;
           padding: 0.5rem;
         }
 
@@ -710,13 +771,13 @@
     container.innerHTML = `
       <div class="widget-header">
         <div class="widget-header-content">
-          <span class="widget-header-icon">💬</span>
+          <span class="widget-header-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
           <div class="widget-header-info">
             <div class="widget-header-title">${widgetTitle}</div>
             <div class="widget-header-subtitle">We typically reply instantly</div>
           </div>
         </div>
-        <button class="widget-minimize-btn" title="Close">×</button>
+        <button class="widget-minimize-btn" title="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <div class="widget-body">
         <div class="widget-messages"></div>
@@ -950,6 +1011,53 @@
       }
     }
 
+    // Typewriter reveal for bulk responses (external APIs)
+    function typewriterReveal(element, text, scrollContainer) {
+      return new Promise((resolve) => {
+        const words = text.split(/(\s+)/);
+        let currentText = "";
+        let wordIndex = 0;
+        let scrollTick = 0;
+
+        function tick() {
+          if (wordIndex >= words.length) {
+            // Final render without cursor
+            element.innerHTML = parseMarkdown(text);
+            scrollContainer.scrollTop = scrollContainer.scrollHeight;
+            resolve();
+            return;
+          }
+
+          // Reveal 3 words per tick
+          for (let i = 0; i < 3 && wordIndex < words.length; i++) {
+            currentText += words[wordIndex];
+            wordIndex++;
+          }
+
+          // Render with blinking cursor
+          const html = parseMarkdown(currentText);
+          const cursorSpan = '<span class="typing-cursor"></span>';
+          const lastCloseTag = html.match(/<\/[^>]+>\s*$/);
+          if (lastCloseTag) {
+            const pos = html.lastIndexOf(lastCloseTag[0]);
+            element.innerHTML = html.slice(0, pos) + cursorSpan + html.slice(pos);
+          } else {
+            element.innerHTML = html + cursorSpan;
+          }
+
+          // Smooth scroll every 3rd tick
+          scrollTick++;
+          if (scrollTick % 3 === 0) {
+            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+          }
+
+          setTimeout(tick, 30);
+        }
+
+        tick();
+      });
+    }
+
     // Send message with retry logic
     async function sendMessageStream(question, messageElement, retryCount = 0) {
       const maxRetries = 2;
@@ -990,6 +1098,7 @@
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let fullReply = "";
+        let useTypewriter = false;
 
         while (true) {
           const { value, done } = await reader.read();
@@ -1016,16 +1125,38 @@
 
                 // Append content to message
                 if (parsed.content) {
+                  // Remove typing indicator on first content
+                  if (fullReply === "" && messageElement.querySelector(".typing-indicator")) {
+                    messageElement.innerHTML = "";
+                  }
+
+                  // Detect bulk response from external API (one large chunk)
+                  if (parsed.content.length > 50 && fullReply === "") {
+                    useTypewriter = true;
+                  }
+
                   fullReply += parsed.content;
-                  messageElement.innerHTML = parseMarkdown(fullReply);
-                  // Auto-scroll to bottom
-                  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                  if (!useTypewriter) {
+                    messageElement.innerHTML = parseMarkdown(fullReply);
+                    // Auto-scroll to bottom
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                  }
                 }
               } catch (e) {
                 // Ignore parse errors for partial chunks
               }
             }
           }
+        }
+
+        // Typewriter reveal for bulk responses
+        if (useTypewriter && fullReply) {
+          // Clear typing indicator if still showing
+          if (messageElement.querySelector(".typing-indicator")) {
+            messageElement.innerHTML = "";
+          }
+          await typewriterReveal(messageElement, fullReply, messagesDiv);
         }
 
         return fullReply || "Sorry, I couldn't generate a response.";
@@ -1074,8 +1205,10 @@
       addMessage("user", question);
       textarea.value = "";
 
-      // Create empty assistant message for streaming
+      // Create assistant message with typing indicator
       const assistantMessage = addMessage("assistant", "");
+      assistantMessage.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
       try {
         await sendMessageStream(question, assistantMessage);
@@ -1107,9 +1240,9 @@
 
     function minimize() {
       localStorage.setItem(minimizedKey, "true");
-      container.style.display = "none";
+      container.classList.remove("widget-visible");
       backdrop.style.display = "none";
-      bubbleElement.style.display = "flex";
+      bubbleElement.classList.remove("widget-open");
     }
 
     // Apply config to widget
@@ -1132,6 +1265,11 @@
     shadowRoot.appendChild(backdrop);
     shadowRoot.appendChild(container);
 
+    // Trigger open animation on next frame
+    requestAnimationFrame(() => {
+      container.classList.add("widget-visible");
+    });
+
     // Load conversation history
     loadConversationHistory();
 
@@ -1139,15 +1277,28 @@
     textarea.focus();
   }
 
-  // Bubble click handler - loads full widget or shows it if already loaded
+  // Bubble click handler - toggles full widget open/closed
   bubbleElement.onclick = () => {
+    // If panel is open, close it
+    if (isFullWidgetLoaded && container && container.classList.contains("widget-visible")) {
+      localStorage.setItem(minimizedKey, "true");
+      container.classList.remove("widget-visible");
+      const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
+      if (backdrop) backdrop.style.display = "none";
+      bubbleElement.classList.remove("widget-open");
+      return;
+    }
+
     localStorage.setItem(minimizedKey, "false");
     if (isFullWidgetLoaded && container) {
       // Widget already loaded, just show it
-      bubbleElement.style.display = "none";
-      container.style.display = "";
+      bubbleElement.classList.add("widget-open");
+      container.classList.add("widget-visible");
       const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
       if (backdrop) backdrop.style.display = "";
+      // Instantly scroll to bottom for existing history
+      const msgs = container.querySelector(".widget-messages");
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
     } else {
       loadFullWidget();
     }
@@ -1204,9 +1355,9 @@
         // Show widget if already loaded but hidden
         const container = shadowRoot.querySelector(".widget-container");
         const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
-        if (container) container.style.display = "";
+        if (container) container.classList.add("widget-visible");
         if (backdrop) backdrop.style.display = "";
-        bubbleElement.style.display = "none";
+        bubbleElement.classList.add("widget-open");
       }
     },
     close: function() {
@@ -1214,13 +1365,9 @@
       if (isFullWidgetLoaded) {
         const container = shadowRoot.querySelector(".widget-container");
         const backdrop = shadowRoot.querySelector(".widget-mobile-backdrop");
-        if (container) {
-          container.style.display = "none";
-        }
-        if (backdrop) {
-          backdrop.style.display = "none";
-        }
-        bubbleElement.style.display = "flex";
+        if (container) container.classList.remove("widget-visible");
+        if (backdrop) backdrop.style.display = "none";
+        bubbleElement.classList.remove("widget-open");
       }
     },
     sendMessage: function(message, autoSend = true) {
